@@ -85,7 +85,7 @@ namespace lab1
                         if(SelectPolygon(e))
                         {
                             var poly = selectedPolygon;
-                            if(poly.ShowBorder)
+                            if(poly.ShowBorder || poly.Points.Count<3)
                             {
                                 poly.ShowBorder = false;
                             }
@@ -263,7 +263,7 @@ namespace lab1
                 graphics.DrawLine(blackPen, p1.X, p1.Y, p2.X, p2.Y);
             }
         }
-        private void DrawPolygons()
+        public void DrawPolygons()
         {
             Canvas.Image.Dispose();
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
@@ -293,9 +293,14 @@ namespace lab1
         private void CheckConditionsAndDraw(Polygon poly)
         {
             if (poly.Points.Count == 0)
+            {
                 Polygons.Remove(poly);
+                return;
+            }
             if (poly.ShowBorder && poly.Points.Count >= 3)
-                Geometry.CreateBoundedPolygon(Points, offset);
+                poly.BorderPoints = Geometry.CreateBoundedPolygon(poly.Points, offset);
+            else
+                poly.ShowBorder = false;
             DrawPolygons();
         }
         private int mod(int x, int m)

@@ -31,11 +31,11 @@
             layoutPanel = new TableLayoutPanel();
             Canvas = new PictureBox();
             panel1 = new Panel();
+            borderModeRadioButton = new RadioButton();
             clearCanvasButton = new Button();
             deleteModeRadioButton = new RadioButton();
             moveModeRadioButton = new RadioButton();
             addModeRadioButton = new RadioButton();
-            borderModeRadioButton = new RadioButton();
             layoutPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)Canvas).BeginInit();
             panel1.SuspendLayout();
@@ -69,6 +69,7 @@
             // 
             // panel1
             // 
+            panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             panel1.Controls.Add(borderModeRadioButton);
             panel1.Controls.Add(clearCanvasButton);
             panel1.Controls.Add(deleteModeRadioButton);
@@ -79,11 +80,23 @@
             panel1.Size = new Size(216, 547);
             panel1.TabIndex = 1;
             // 
+            // borderModeRadioButton
+            // 
+            borderModeRadioButton.AutoSize = true;
+            borderModeRadioButton.Location = new Point(15, 163);
+            borderModeRadioButton.Name = "borderModeRadioButton";
+            borderModeRadioButton.Size = new Size(118, 24);
+            borderModeRadioButton.TabIndex = 4;
+            borderModeRadioButton.TabStop = true;
+            borderModeRadioButton.Text = "Border Mode";
+            borderModeRadioButton.UseVisualStyleBackColor = true;
+            // 
             // clearCanvasButton
             // 
-            clearCanvasButton.Location = new Point(26, 481);
+            clearCanvasButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            clearCanvasButton.Location = new Point(15, 481);
             clearCanvasButton.Name = "clearCanvasButton";
-            clearCanvasButton.Size = new Size(168, 44);
+            clearCanvasButton.Size = new Size(192, 57);
             clearCanvasButton.TabIndex = 3;
             clearCanvasButton.Text = "Clear canvas";
             clearCanvasButton.UseVisualStyleBackColor = true;
@@ -121,17 +134,6 @@
             addModeRadioButton.TabStop = true;
             addModeRadioButton.Text = "Add Mode";
             addModeRadioButton.UseVisualStyleBackColor = true;
-            // 
-            // borderModeRadioButton
-            // 
-            borderModeRadioButton.AutoSize = true;
-            borderModeRadioButton.Location = new Point(15, 163);
-            borderModeRadioButton.Name = "borderModeRadioButton";
-            borderModeRadioButton.Size = new Size(118, 24);
-            borderModeRadioButton.TabIndex = 4;
-            borderModeRadioButton.TabStop = true;
-            borderModeRadioButton.Text = "Border Mode";
-            borderModeRadioButton.UseVisualStyleBackColor = true;
             // 
             // MainWindow
             // 
