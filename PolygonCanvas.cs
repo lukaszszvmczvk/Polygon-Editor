@@ -86,14 +86,9 @@ namespace lab1
                         {
                             var poly = selectedPolygon;
                             if(poly.ShowBorder || poly.Points.Count<3)
-                            {
                                 poly.ShowBorder = false;
-                            }
                             else
-                            {
-                                poly.BorderPoints = Geometry.CreateBoundedPolygon(poly.Points, offset);
                                 poly.ShowBorder = true;
-                            }
                             DrawPolygons();
                         }
                         break;
@@ -147,6 +142,21 @@ namespace lab1
         }
         private void AddPoint(MouseEventArgs e)
         {
+            if(Points.Count == 0 && SelectPointOrEdge(e))
+            {
+                if(selectedEdge != null)
+                {
+                    for(int i=0; i<selectedPolygon.Points.Count; i++)
+                    {
+                        if (selectedPolygon.Points[i] == selectedEdge.p1)
+                        {
+                            selectedPolygon.Points.Insert(i+1, new PointF(e.X,e.Y));
+                            DrawPolygons();
+                            return;
+                        }
+                    }
+                }
+            }
             if (CheckIfPolygonIsCrated(e))
             {
                 Canvas.Refresh();
@@ -190,16 +200,15 @@ namespace lab1
             {
                 for(int j = 0; j < poly.Points.Count; ++j)
                 {
-                    if (Geometry.IsPointClicked(e, poly.Points[j]))
-                    {
-                        selectedPolygon = poly;
-                        selectedPoint = poly.Points[j];
-                        return true;
-                    }
                     if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[mod(j - 1, poly.Points.Count)])))
                     {
                         selectedPolygon = poly;
-                        selectedEdge = new Edge(poly.Points[mod(j-1,poly.Points.Count)], poly.Points[j]);
+                        if (Geometry.IsPointClicked(e, poly.Points[mod(j - 1, poly.Points.Count)]))
+                            selectedPoint = poly.Points[mod(j - 1, poly.Points.Count)];
+                        else if (Geometry.IsPointClicked(e, poly.Points[j]))
+                            selectedPoint = poly.Points[j];
+                        else
+                            selectedEdge = new Edge(poly.Points[mod(j-1,poly.Points.Count)], poly.Points[j]);
                         return true;
                     }
                 }
@@ -224,16 +233,17 @@ namespace lab1
             {
                 for(int i=0; i<poly.Points.Count; ++i)
                 {
-                    if(Geometry.IsPointClicked(e, poly.Points[i]))
+                    if (Geometry.IsEdgeClicked(e, new Edge(poly.Points[i], poly.Points[mod(i - 1, poly.Points.Count)])))
                     {
-                        poly.Points.RemoveAt(i);
-                        CheckConditionsAndDraw(poly);
-                        return true;
-                    }
-                    else if(Geometry.IsEdgeClicked(e, new Edge(poly.Points[mod(i - 1,poly.Points.Count)], poly.Points[i])))
-                    {
-                        poly.Points.RemoveAt(i);
-                        poly.Points.RemoveAt(mod(i-1,poly.Points.Count));
+                        if (Geometry.IsPointClicked(e, poly.Points[mod(i - 1, poly.Points.Count)]))
+                            poly.Points.RemoveAt(mod(i - 1, poly.Points.Count));
+                        else if (Geometry.IsPointClicked(e, poly.Points[i]))
+                            poly.Points.RemoveAt(i);
+                        else
+                        {
+                            poly.Points.RemoveAt(i);
+                            poly.Points.RemoveAt(mod(i - 1, poly.Points.Count));
+                        }
                         CheckConditionsAndDraw(poly);
                         return true;
                     }
@@ -285,6 +295,7 @@ namespace lab1
                     g.FillPolygon(brush, poly.Points.ToArray());
                     if(poly.ShowBorder)
                     {
+                        poly.BorderPoints = Geometry.CreateBoundedPolygon(poly.Points, offset);
                         g.DrawPolygon(redPen, poly.BorderPoints.Select(x => new Point((int)x.X,(int)x.Y)).ToArray());
                     }
                 }
@@ -297,9 +308,7 @@ namespace lab1
                 Polygons.Remove(poly);
                 return;
             }
-            if (poly.ShowBorder && poly.Points.Count >= 3)
-                poly.BorderPoints = Geometry.CreateBoundedPolygon(poly.Points, offset);
-            else
+            if(poly.Points.Count < 3)
                 poly.ShowBorder = false;
             DrawPolygons();
         }
