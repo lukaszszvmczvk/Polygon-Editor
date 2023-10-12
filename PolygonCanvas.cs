@@ -12,21 +12,25 @@ namespace lab1
     {
         Add,
         Move,
-        Delete
+        Delete,
+        Border
     }
     public class Polygon
     {
-        public List<Point> Points;
-        public Polygon(List<Point> points)
+        public bool ShowBorder { get; set; }
+        public List<PointF> Points;
+        public List<PointF> BorderPoints;
+        public Polygon(List<PointF> points)
         {
             Points = points;
+            ShowBorder = false;
         }
     }
     public class Edge
     {
-        public Point p1;
-        public Point p2;
-        public Edge(Point p1, Point p2)
+        public PointF p1;
+        public PointF p2;
+        public Edge(PointF p1, PointF p2)
         {
             this.p1 = p1;
             this.p2 = p2;
@@ -35,19 +39,20 @@ namespace lab1
     public class PolygonCanvas
     {
         public CanvasMode Mode;
-        public List<Point> Points;
+        public List<PointF> Points;
         public PictureBox Canvas;
         public List<Polygon> Polygons;
         private int radius = 5;
+        private int offset = 20;
 
         /// <summary>
         ///  Edit mode variables
         /// </summary>
         private Polygon? selectedPolygon = null;
-        private Point? previousPoint = null;
-        private Point? selectedPoint = null;
+        private PointF? previousPoint = null;
+        private PointF? selectedPoint = null;
         private Edge? selectedEdge = null;
-        public PolygonCanvas(CanvasMode mode, List<Point> points, PictureBox canvas, List<Polygon> polygons)
+        public PolygonCanvas(CanvasMode mode, List<PointF> points, PictureBox canvas, List<Polygon> polygons)
         {
             this.Mode = mode;
             this.Points = points;
@@ -70,11 +75,27 @@ namespace lab1
                     case CanvasMode.Move:
                         if(!SelectPointOrEdge(e))
                             SelectPolygon(e);
-                        previousPoint = new Point(e.X, e.Y);
+                        previousPoint = new PointF(e.X, e.Y);
                         break;
                     case CanvasMode.Delete:
                         if (!DeletePointOrEdge(e))
                             DeletePolygon(e);
+                        break;
+                    case CanvasMode.Border:
+                        if(SelectPolygon(e))
+                        {
+                            var poly = selectedPolygon;
+                            if(poly.ShowBorder)
+                            {
+                                poly.ShowBorder = false;
+                            }
+                            else
+                            {
+                                poly.BorderPoints = Geometry.CreateBoundedPolygon(poly.Points, offset);
+                                poly.ShowBorder = true;
+                            }
+                            DrawPolygons();
+                        }
                         break;
                 }
             }
@@ -90,17 +111,17 @@ namespace lab1
             if(Mode == CanvasMode.Move && selectedPolygon != null)
             {
                 (var X, var Y) = (e.X - previousPoint.Value.X, e.Y - previousPoint.Value.Y);
-                previousPoint = new Point(e.X, e.Y);
+                previousPoint = new PointF(e.X, e.Y);
                 if(selectedPoint != null)
                 {
                     selectedPolygon.Points = selectedPolygon.Points.Select((p) =>
                     {
                         if (p.X == selectedPoint.Value.X && p.Y == selectedPoint.Value.Y)
-                            return new Point(p.X + X, p.Y + Y);
+                            return new PointF(p.X + X, p.Y + Y);
                         else
                             return p;
                     }).ToList();
-                    selectedPoint = new Point(selectedPoint.Value.X + X, selectedPoint.Value.Y + Y);
+                    selectedPoint = new PointF(selectedPoint.Value.X + X, selectedPoint.Value.Y + Y);
                 }
                 else if(selectedEdge != null)
                 {
@@ -108,17 +129,19 @@ namespace lab1
                     {
                         if ((p.X == selectedEdge.p1.X && p.Y == selectedEdge.p1.Y) ||
                                 (p.X == selectedEdge.p2.X && p.Y == selectedEdge.p2.Y) )
-                            return new Point(p.X + X, p.Y + Y);
+                            return new PointF(p.X + X, p.Y + Y);
                         else
                             return p;
                     }).ToList();
-                    selectedEdge.p1 = new Point(selectedEdge.p1.X+X, selectedEdge.p1.Y+Y);
-                    selectedEdge.p2 = new Point(selectedEdge.p2.X+X, selectedEdge.p2.Y+Y);
+                    selectedEdge.p1 = new PointF(selectedEdge.p1.X+X, selectedEdge.p1.Y+Y);
+                    selectedEdge.p2 = new PointF(selectedEdge.p2.X+X, selectedEdge.p2.Y+Y);
                 }
                 else
                 {
-                    selectedPolygon.Points = selectedPolygon.Points.Select((p) => new Point(p.X + X, p.Y + Y)).ToList();
+                    selectedPolygon.Points = selectedPolygon.Points.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
                 }
+                if (selectedPolygon.ShowBorder)
+                    selectedPolygon.BorderPoints = Geometry.CreateBoundedPolygon(selectedPolygon.Points, offset);
                 DrawPolygons();
             }
         }
@@ -129,7 +152,7 @@ namespace lab1
                 Canvas.Refresh();
                 return;
             }
-            Points.Add(new Point(e.X, e.Y));
+            Points.Add(new PointF(e.X, e.Y));
             using (Graphics g = Graphics.FromImage(Canvas.Image))
             {
                 g.FillEllipse(Brushes.Black, e.X - radius, e.Y - radius, radius * 2, radius * 2);
@@ -152,7 +175,7 @@ namespace lab1
                     g.FillPolygon(brush, Points.ToArray());
                 }
                 DrawLine(Points[Points.Count-1], Points[0]);
-                Points = new List<Point>();
+                Points = new List<PointF>();
                 return true;
             }
             else
@@ -162,7 +185,7 @@ namespace lab1
         }
         private bool SelectPointOrEdge(MouseEventArgs e)
         {
-            var point = new Point(e.X, e.Y);
+            var point = new PointF(e.X, e.Y);
             foreach (var poly in Polygons)
             {
                 for(int j = 0; j < poly.Points.Count; ++j)
@@ -173,32 +196,27 @@ namespace lab1
                         selectedPoint = poly.Points[j];
                         return true;
                     }
-                    if(j>=1 && Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[j-1])))
+                    if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[mod(j - 1, poly.Points.Count)])))
                     {
                         selectedPolygon = poly;
-                        selectedEdge = new Edge(poly.Points[j-1], poly.Points[j]);
+                        selectedEdge = new Edge(poly.Points[mod(j-1,poly.Points.Count)], poly.Points[j]);
                         return true;
                     }
-                }
-                if (Geometry.IsEdgeClicked(e, new Edge(poly.Points[poly.Points.Count-1], poly.Points[0])))
-                {
-                    selectedPolygon = poly;
-                    selectedEdge = new Edge(poly.Points[poly.Points.Count-1], poly.Points[0]);
-                    return true;
                 }
             }
             return false;
         }
-        private void SelectPolygon(MouseEventArgs e)
+        private bool SelectPolygon(MouseEventArgs e)
         {
             for (int i = 0; i < Polygons.Count; ++i)
             {
-                if (Geometry.IsPointInsidePolygon(Polygons[i].Points.ToArray(), new Point(e.X, e.Y)))
+                if (Geometry.IsPointInsidePolygon(Polygons[i].Points.ToArray(), new PointF(e.X, e.Y)))
                 {
                     selectedPolygon = Polygons[i];
-                    return;
+                    return true;
                 }
             }
+            return false;
         }
         private bool DeletePointOrEdge(MouseEventArgs e)
         {
@@ -209,36 +227,23 @@ namespace lab1
                     if(Geometry.IsPointClicked(e, poly.Points[i]))
                     {
                         poly.Points.RemoveAt(i);
-                        if(poly.Points.Count == 0)
-                            Polygons.Remove(poly);
-                        DrawPolygons();
+                        CheckConditionsAndDraw(poly);
                         return true;
                     }
-                    else if(i>0 && Geometry.IsEdgeClicked(e, new Edge(poly.Points[i - 1], poly.Points[i])))
+                    else if(Geometry.IsEdgeClicked(e, new Edge(poly.Points[mod(i - 1,poly.Points.Count)], poly.Points[i])))
                     {
                         poly.Points.RemoveAt(i);
-                        poly.Points.RemoveAt(i-1);
-                        if (poly.Points.Count == 0)
-                            Polygons.Remove(poly);
-                        DrawPolygons();
+                        poly.Points.RemoveAt(mod(i-1,poly.Points.Count));
+                        CheckConditionsAndDraw(poly);
                         return true;
                     }
-                }
-                if(Geometry.IsEdgeClicked(e, new Edge(poly.Points[poly.Points.Count - 1], poly.Points[0])))
-                {
-                    poly.Points.RemoveAt(0);
-                    poly.Points.RemoveAt(poly.Points.Count - 1);
-                    if (poly.Points.Count == 0)
-                        Polygons.Remove(poly);
-                    DrawPolygons();
-                    return true;
                 }
             }
             return false;
         }
         private void DeletePolygon(MouseEventArgs e)
         {
-            var p = new Point(e.X, e.Y);
+            var p = new PointF(e.X, e.Y);
             foreach (var poly in Polygons)
             {
                 if (Geometry.IsPointInsidePolygon(poly.Points.ToArray(), p))
@@ -249,7 +254,7 @@ namespace lab1
                 }
             }
         }
-        private void DrawLine(Point p1, Point p2)
+        private void DrawLine(PointF p1, PointF p2)
         {
             Pen blackPen = new Pen(Color.Black, 2);
 
@@ -263,6 +268,7 @@ namespace lab1
             Canvas.Image.Dispose();
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             SolidBrush brush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
+            Pen redPen = new Pen(Color.Red, 2);
             foreach (var poly in Polygons)
             {
                 for(int i=0; i<poly.Points.Count; ++i)
@@ -277,8 +283,20 @@ namespace lab1
                 using (Graphics g = Graphics.FromImage(Canvas.Image))
                 {
                     g.FillPolygon(brush, poly.Points.ToArray());
+                    if(poly.ShowBorder)
+                    {
+                        g.DrawPolygon(redPen, poly.BorderPoints.Select(x => new Point((int)x.X,(int)x.Y)).ToArray());
+                    }
                 }
             }
+        }
+        private void CheckConditionsAndDraw(Polygon poly)
+        {
+            if (poly.Points.Count == 0)
+                Polygons.Remove(poly);
+            if (poly.ShowBorder && poly.Points.Count >= 3)
+                Geometry.CreateBoundedPolygon(Points, offset);
+            DrawPolygons();
         }
         private int mod(int x, int m)
         {

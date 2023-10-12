@@ -31,10 +31,11 @@
             layoutPanel = new TableLayoutPanel();
             Canvas = new PictureBox();
             panel1 = new Panel();
+            clearCanvasButton = new Button();
             deleteModeRadioButton = new RadioButton();
             moveModeRadioButton = new RadioButton();
             addModeRadioButton = new RadioButton();
-            clearCanvasButton = new Button();
+            borderModeRadioButton = new RadioButton();
             layoutPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)Canvas).BeginInit();
             panel1.SuspendLayout();
@@ -68,6 +69,7 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(borderModeRadioButton);
             panel1.Controls.Add(clearCanvasButton);
             panel1.Controls.Add(deleteModeRadioButton);
             panel1.Controls.Add(moveModeRadioButton);
@@ -76,6 +78,16 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(216, 547);
             panel1.TabIndex = 1;
+            // 
+            // clearCanvasButton
+            // 
+            clearCanvasButton.Location = new Point(26, 481);
+            clearCanvasButton.Name = "clearCanvasButton";
+            clearCanvasButton.Size = new Size(168, 44);
+            clearCanvasButton.TabIndex = 3;
+            clearCanvasButton.Text = "Clear canvas";
+            clearCanvasButton.UseVisualStyleBackColor = true;
+            clearCanvasButton.Click += clearCanvasButton_Click;
             // 
             // deleteModeRadioButton
             // 
@@ -110,15 +122,16 @@
             addModeRadioButton.Text = "Add Mode";
             addModeRadioButton.UseVisualStyleBackColor = true;
             // 
-            // clearCanvasButton
+            // borderModeRadioButton
             // 
-            clearCanvasButton.Location = new Point(26, 481);
-            clearCanvasButton.Name = "clearCanvasButton";
-            clearCanvasButton.Size = new Size(168, 44);
-            clearCanvasButton.TabIndex = 3;
-            clearCanvasButton.Text = "Clear canvas";
-            clearCanvasButton.UseVisualStyleBackColor = true;
-            clearCanvasButton.Click += clearCanvasButton_Click;
+            borderModeRadioButton.AutoSize = true;
+            borderModeRadioButton.Location = new Point(15, 163);
+            borderModeRadioButton.Name = "borderModeRadioButton";
+            borderModeRadioButton.Size = new Size(118, 24);
+            borderModeRadioButton.TabIndex = 4;
+            borderModeRadioButton.TabStop = true;
+            borderModeRadioButton.Text = "Border Mode";
+            borderModeRadioButton.UseVisualStyleBackColor = true;
             // 
             // MainWindow
             // 
@@ -147,5 +160,6 @@
         private RadioButton moveModeRadioButton;
         private RadioButton addModeRadioButton;
         private Button clearCanvasButton;
+        private RadioButton borderModeRadioButton;
     }
 }

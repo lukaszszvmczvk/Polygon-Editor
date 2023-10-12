@@ -49,9 +49,9 @@ namespace lab1
 
             return Math.Sqrt(dx * dx + dy * dy);
         }
-        public static bool IsPointInsidePolygon(Point[] poly, Point p)
+        public static bool IsPointInsidePolygon(PointF[] poly, PointF p)
         {
-            Point p1, p2;
+            PointF p1, p2;
             bool inside = false;
 
             if (poly.Length < 3)
@@ -59,12 +59,12 @@ namespace lab1
                 return inside;
             }
 
-            var oldPoint = new Point(
+            var oldPoint = new PointF(
                 poly[poly.Length - 1].X, poly[poly.Length - 1].Y);
 
             for (int i = 0; i < poly.Length; i++)
             {
-                var newPoint = new Point(poly[i].X, poly[i].Y);
+                var newPoint = new PointF(poly[i].X, poly[i].Y);
 
                 if (newPoint.X > oldPoint.X)
                 {
@@ -89,7 +89,7 @@ namespace lab1
 
             return inside;
         }
-        public static bool IsPointClicked(MouseEventArgs e, Point p)
+        public static bool IsPointClicked(MouseEventArgs e, PointF p)
         {
             int X = e.X;
             int Y = e.Y;
@@ -98,7 +98,41 @@ namespace lab1
         public static bool IsEdgeClicked(MouseEventArgs e, Edge edge)
         {
             var closest = new PointF();
-            return FindDistanceToSegment(new Point(e.X, e.Y), edge.p1, edge.p2, out closest) <= radius;
+            return FindDistanceToSegment(new PointF(e.X, e.Y), edge.p1, edge.p2, out closest) <= radius;
         }
+        public static List<PointF> CreateBoundedPolygon(List<PointF> points, int offset)
+        {
+            List<PointF> boundingPoints = new List<PointF>();
+
+            int n = points.Count;
+
+            for (int i = 0; i < n; i++)
+            {
+                var v1 = NormalizeVector(points[i].X - points[(i+1)%n].X, points[i].Y - points[(i+1)%n].Y);
+                var v2 = NormalizeVector(points[(i+2)%n].X - points[(i + 1) % n].X, points[(i+2)%n].Y - points[(i + 1) % n].Y);
+                var x = v1.x+v2.x;
+                var y = v1.y+v2.y;
+                var v3 = NormalizeVector(x, y, offset);
+                boundingPoints.Add(new PointF(points[(i+1)%n].X - (float)v3.x, points[(i + 1) % n].Y - (float)v3.y));
+            }
+
+            return boundingPoints;
+        }
+        public static (double x, double y) NormalizeVector(double x, double y, int n=1)
+        {
+            double length = Math.Sqrt(x * x + y * y);
+
+            if (length == 0)
+            {
+                // Jeśli długość wektora wynosi 0 (wektor zerowy), zwracamy (0, 0).
+                return (0, 0);
+            }
+
+            double normalizedX = n * x / length;
+            double normalizedY = n * y / length;
+
+            return (normalizedX, normalizedY);
+        }
+
     }
 }
