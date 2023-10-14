@@ -283,8 +283,7 @@ namespace lab1
         }
         public void DrawPolygons()
         {
-            Canvas.Image.Dispose();
-            Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
+            var newCanvas = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             SolidBrush brush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
             Pen redPen = new Pen(Color.Red, 2);
             foreach (var poly in Polygons)
@@ -292,13 +291,13 @@ namespace lab1
                 for(int i=0; i<poly.Points.Count; ++i)
                 {
                     var point = poly.Points[i];
-                    using (Graphics g = Graphics.FromImage(Canvas.Image))
+                    using (Graphics g = Graphics.FromImage(newCanvas))
                     {
                         g.FillEllipse(Brushes.Black, point.X - radius, point.Y - radius, radius * 2, radius * 2);
                         DrawLine(poly.Points[mod(i-1,poly.Points.Count)], point);
                     }
                 }
-                using (Graphics g = Graphics.FromImage(Canvas.Image))
+                using (Graphics g = Graphics.FromImage(newCanvas))
                 {
                     g.FillPolygon(brush, poly.Points.ToArray());
                     if(poly.ShowBorder)
@@ -308,6 +307,8 @@ namespace lab1
                     }
                 }
             }
+            Canvas.Image = newCanvas;
+            Canvas.Refresh();
         }
         private void CheckConditionsAndDraw(Polygon poly)
         {

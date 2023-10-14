@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace lab1
 {
     public partial class MainWindow : Form
@@ -49,6 +51,13 @@ namespace lab1
         {
             polygonCanvas.Clear();
             addModeRadioButton.Checked = true;
+        }
+    }
+    public class DoubleBufferedPictureBox : PictureBox
+    {
+        public DoubleBufferedPictureBox()
+        {
+            DoubleBuffered = true;
         }
     }
 }

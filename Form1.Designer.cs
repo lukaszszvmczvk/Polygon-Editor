@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             layoutPanel = new TableLayoutPanel();
-            Canvas = new PictureBox();
+            Canvas = new DoubleBufferedPictureBox();
             panel1 = new Panel();
             borderModeRadioButton = new RadioButton();
             clearCanvasButton = new Button();
