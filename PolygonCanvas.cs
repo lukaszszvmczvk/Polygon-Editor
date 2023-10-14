@@ -109,34 +109,42 @@ namespace lab1
                 previousPoint = new PointF(e.X, e.Y);
                 if(selectedPoint != null)
                 {
-                    selectedPolygon.Points = selectedPolygon.Points.Select((p) =>
+                    for(int i=0; i<selectedPolygon.Points.Count; ++i)
                     {
+                        var p = selectedPolygon.Points[i];
                         if (p.X == selectedPoint.Value.X && p.Y == selectedPoint.Value.Y)
-                            return new PointF(p.X + X, p.Y + Y);
-                        else
-                            return p;
-                    }).ToList();
+                        {
+                            ChangePointCoordinates(p, i, X, Y);
+                            break;
+                        }
+
+                    }
                     selectedPoint = new PointF(selectedPoint.Value.X + X, selectedPoint.Value.Y + Y);
                 }
                 else if(selectedEdge != null)
                 {
-                    selectedPolygon.Points = selectedPolygon.Points.Select((p) =>
+                    var counter = 0;
+                    for(int i=0; i<selectedPolygon.Points.Count; ++i)
                     {
+                        var p = selectedPolygon.Points[i];
                         if ((p.X == selectedEdge.p1.X && p.Y == selectedEdge.p1.Y) ||
-                                (p.X == selectedEdge.p2.X && p.Y == selectedEdge.p2.Y) )
-                            return new PointF(p.X + X, p.Y + Y);
-                        else
-                            return p;
-                    }).ToList();
+                               (p.X == selectedEdge.p2.X && p.Y == selectedEdge.p2.Y))
+                        {
+                            ++counter;
+                            ChangePointCoordinates(p, i, X, Y);
+                            if (counter == 2)
+                                break;
+                        }
+                    }
                     selectedEdge.p1 = new PointF(selectedEdge.p1.X+X, selectedEdge.p1.Y+Y);
                     selectedEdge.p2 = new PointF(selectedEdge.p2.X+X, selectedEdge.p2.Y+Y);
                 }
                 else
                 {
                     selectedPolygon.Points = selectedPolygon.Points.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
+                    if(selectedPolygon.ShowBorder)
+                        selectedPolygon.BorderPoints = selectedPolygon.BorderPoints.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
                 }
-                if (selectedPolygon.ShowBorder)
-                    selectedPolygon.BorderPoints = Geometry.CreateBoundedPolygon(selectedPolygon.Points, offset);
                 DrawPolygons();
             }
         }
@@ -315,6 +323,20 @@ namespace lab1
         private int mod(int x, int m)
         {
             return (x % m + m) % m;
+        }
+        private void ChangePointCoordinates(PointF p, int i, float X, float Y)
+        {
+            p.X += X;
+            p.Y += Y;
+            selectedPolygon.Points[i] = p;
+            if (selectedPolygon.ShowBorder)
+            {
+                var j = mod(i - 1, selectedPolygon.Points.Count);
+                var bp = selectedPolygon.BorderPoints[j];
+                bp.X += X;
+                bp.Y += Y;
+                selectedPolygon.BorderPoints[j] = bp;
+            }
         }
         public void Clear()
         {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,45 +50,25 @@ namespace lab1
 
             return Math.Sqrt(dx * dx + dy * dy);
         }
-        public static bool IsPointInsidePolygon(PointF[] poly, PointF p)
+        public static bool IsPointInsidePolygon(PointF[] polygon, PointF testPoint)
         {
-            PointF p1, p2;
-            bool inside = false;
-
-            if (poly.Length < 3)
+            bool result = false;
+            int j = polygon.Length - 1;
+            for (int i = 0; i < polygon.Length; i++)
             {
-                return inside;
+                if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y ||
+                    polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+                {
+                    if (polygon[i].X + (testPoint.Y - polygon[i].Y) /
+                       (polygon[j].Y - polygon[i].Y) *
+                       (polygon[j].X - polygon[i].X) < testPoint.X)
+                    {
+                        result = !result;
+                    }
+                }
+                j = i;
             }
-
-            var oldPoint = new PointF(
-                poly[poly.Length - 1].X, poly[poly.Length - 1].Y);
-
-            for (int i = 0; i < poly.Length; i++)
-            {
-                var newPoint = new PointF(poly[i].X, poly[i].Y);
-
-                if (newPoint.X > oldPoint.X)
-                {
-                    p1 = oldPoint;
-                    p2 = newPoint;
-                }
-                else
-                {
-                    p1 = newPoint;
-                    p2 = oldPoint;
-                }
-
-                if ((newPoint.X < p.X) == (p.X <= oldPoint.X)
-                    && (p.Y - (long)p1.Y) * (p2.X - p1.X)
-                    < (p2.Y - (long)p1.Y) * (p.X - p1.X))
-                {
-                    inside = !inside;
-                }
-
-                oldPoint = newPoint;
-            }
-
-            return inside;
+            return result;
         }
         public static bool IsPointClicked(MouseEventArgs e, PointF p)
         {
@@ -110,10 +91,15 @@ namespace lab1
             {
                 var v1 = NormalizeVector(points[i].X - points[(i+1)%n].X, points[i].Y - points[(i+1)%n].Y);
                 var v2 = NormalizeVector(points[(i+2)%n].X - points[(i + 1) % n].X, points[(i+2)%n].Y - points[(i + 1) % n].Y);
+                double angle = Math.Atan2(v2.y, v2.x) - Math.Atan2(v1.y, v1.x);
                 var x = v1.x+v2.x;
                 var y = v1.y+v2.y;
                 var v3 = NormalizeVector(x, y, offset);
-                boundingPoints.Add(new PointF(points[(i+1)%n].X - (float)v3.x, points[(i + 1) % n].Y - (float)v3.y));
+                var newPoint = new PointF(points[(i + 1) % n].X - (float)v3.x, points[(i + 1) % n].Y - (float)v3.y);
+                if(!IsPointInsidePolygon(points.ToArray(),newPoint))
+                    boundingPoints.Add(newPoint);
+                else
+                    boundingPoints.Add(new PointF(points[(i + 1) % n].X + (float)v3.x, points[(i + 1) % n].Y + (float)v3.y));
             }
 
             return boundingPoints;
@@ -124,7 +110,6 @@ namespace lab1
 
             if (length == 0)
             {
-                // Jeśli długość wektora wynosi 0 (wektor zerowy), zwracamy (0, 0).
                 return (0, 0);
             }
 
@@ -133,6 +118,5 @@ namespace lab1
 
             return (normalizedX, normalizedY);
         }
-
     }
 }
