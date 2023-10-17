@@ -2,11 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace lab1
 {
+    public class Line
+    {
+        public float A;
+        public float B;
+        public float C;
+
+        public Line(float a, float b, float c)
+        {
+            this.A = a;
+            this.B = b;
+            this.C = c;
+        }
+    }
     public static class Geometry
     {
         private static int radius = 5;
@@ -84,39 +98,77 @@ namespace lab1
         public static List<PointF> CreateBoundedPolygon(List<PointF> points, int offset)
         {
             List<PointF> boundingPoints = new List<PointF>();
-
+            Line[] lines = new Line[points.Count];
             int n = points.Count;
 
             for (int i = 0; i < n; i++)
             {
-                var v1 = NormalizeVector(points[i].X - points[(i+1)%n].X, points[i].Y - points[(i+1)%n].Y);
-                var v2 = NormalizeVector(points[(i+2)%n].X - points[(i + 1) % n].X, points[(i+2)%n].Y - points[(i + 1) % n].Y);
-                double angle = Math.Atan2(v2.y, v2.x) - Math.Atan2(v1.y, v1.x);
-                var x = v1.x+v2.x;
-                var y = v1.y+v2.y;
-                var v3 = NormalizeVector(x, y, offset);
-                var newPoint = new PointF(points[(i + 1) % n].X - (float)v3.x, points[(i + 1) % n].Y - (float)v3.y);
-                if(!IsPointInsidePolygon(points.ToArray(),newPoint))
-                    boundingPoints.Add(newPoint);
-                else
-                    boundingPoints.Add(new PointF(points[(i + 1) % n].X + (float)v3.x, points[(i + 1) % n].Y + (float)v3.y));
+                var segmentLine = FindlLineEquation(points[i], points[(i + 1) % n]);
+                var offsetLines = FindParallelLines(points[(i + 1) % n], points[(i + 2) % n],offset);
+                var offsetLine = offsetLines.l1;
+                var intersectionPoint = FindIntersection(offsetLine,segmentLine);
+                if (PointsDistance(new PointF(intersectionPoint.X, intersectionPoint.Y), points[i]) <
+                    PointsDistance(points[i], points[(i + 1) % n]))
+                {
+                    offsetLine = offsetLines.l2;
+                }
+                lines[i] = new Line(offsetLine.A, offsetLine.B, offsetLine.C);
             }
-
+            for (int i = 0; i < lines.Length; ++i)
+            {
+                var intersectionPoint = FindIntersection(lines[i], lines[(i+1)%n]);
+                boundingPoints.Add(new PointF(intersectionPoint.X, intersectionPoint.Y));
+            }
             return boundingPoints;
         }
-        public static (double x, double y) NormalizeVector(double x, double y, int n=1)
+        public static Line FindlLineEquation(PointF p1, PointF p2)
         {
-            double length = Math.Sqrt(x * x + y * y);
-
-            if (length == 0)
+            var A = p1.Y - p2.Y;
+            var B = p2.X - p1.X;
+            var C = (p1.X - p2.X) * p1.Y + (p2.Y - p1.Y) * p1.X;
+            return new Line(A, B, C);
+        }
+        public static PointF FindIntersection(Line l1, Line l2)
+        {
+            (var x, var y) = ((l1.B * l2.C - l2.B * l1.C) / (l1.A * l2.B - l2.A * l1.B), (l1.C * l2.A - l2.C * l1.A) / (l1.A * l2.B - l2.A * l1.B));
+            return new PointF(x, y);
+        }
+        public static double PointsDistance(PointF p1, PointF p2)
+        {
+            return Math.Sqrt((p1.X-p2.X)*(p1.X-p2.X) + (p1.Y-p2.Y)*(p1.Y-p2.Y));
+        }
+        public static (Line l1, Line l2) FindParallelLines(PointF p1, PointF p2, int offset)
+        {
+            if(p2.X == p1.X)
             {
-                return (0, 0);
+                var l1 = FindlLineEquation(new PointF(p1.X - offset, p1.Y), new PointF(p2.X - offset, p2.Y));
+                var l2 = FindlLineEquation(new PointF(p1.X + offset, p1.Y), new PointF(p2.X + offset, p2.Y));
+                return (l1, l2);
             }
+            else if(p2.Y == p1.Y)
+            {
+                var l1 = FindlLineEquation(new PointF(p1.X, p1.Y - offset), new PointF(p2.X, p2.Y - offset));
+                var l2 = FindlLineEquation(new PointF(p1.X, p1.Y + offset), new PointF(p2.X, p2.Y + offset));
+                return (l1, l2);
 
-            double normalizedX = n * x / length;
-            double normalizedY = n * y / length;
+            }
+            var m = (p2.Y - p1.Y) / (p2.X-p1.X);
 
-            return (normalizedX, normalizedY);
+            var x1 = Math.Abs(offset * m) / Math.Sqrt(1 + m * m) + p1.X;
+            var x2 = -Math.Abs(offset * m) / Math.Sqrt(1 + m * m) + p1.X;
+            var y1 = -(x1 - p1.X) / m + p1.Y;
+            var y2 = -(x2 - p1.X) / m + p1.Y;
+            var cp1 = new PointF((float)x1, (float)y1);
+            var cp2 = new PointF((float)x2, (float)y2);
+
+            x1 = Math.Abs(offset * m) / Math.Sqrt(1 + m * m) + p2.X;
+            x2 = -Math.Abs(offset * m) / Math.Sqrt(1 + m * m) + p2.X;
+            y1 = -(x1 - p2.X) / m + p2.Y;
+            y2 = -(x2 - p2.X) / m + p2.Y;
+            var cp3 = new PointF((float)x1, (float)y1);
+            var cp4 = new PointF((float)x2, (float)y2);
+
+            return (FindlLineEquation(cp1, cp3), FindlLineEquation(cp2, cp4));
         }
     }
 }

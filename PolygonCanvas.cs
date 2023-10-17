@@ -140,11 +140,7 @@ namespace lab1
                     selectedEdge.p2 = new PointF(selectedEdge.p2.X+X, selectedEdge.p2.Y+Y);
                 }
                 else
-                {
                     selectedPolygon.Points = selectedPolygon.Points.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
-                    if(selectedPolygon.ShowBorder)
-                        selectedPolygon.BorderPoints = selectedPolygon.BorderPoints.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
-                }
                 DrawPolygons();
             }
         }
@@ -330,14 +326,6 @@ namespace lab1
             p.X += X;
             p.Y += Y;
             selectedPolygon.Points[i] = p;
-            if (selectedPolygon.ShowBorder)
-            {
-                var j = mod(i - 1, selectedPolygon.Points.Count);
-                var bp = selectedPolygon.BorderPoints[j];
-                bp.X += X;
-                bp.Y += Y;
-                selectedPolygon.BorderPoints[j] = bp;
-            }
         }
         public void Clear()
         {
