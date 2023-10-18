@@ -204,15 +204,15 @@ namespace lab1
             {
                 for(int j = 0; j < poly.Points.Count; ++j)
                 {
-                    if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[mod(j - 1, poly.Points.Count)])))
+                    if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[Utils.mod(j - 1, poly.Points.Count)])))
                     {
                         selectedPolygon = poly;
-                        if (Geometry.IsPointClicked(e, poly.Points[mod(j - 1, poly.Points.Count)]))
-                            selectedPoint = poly.Points[mod(j - 1, poly.Points.Count)];
+                        if (Geometry.IsPointClicked(e, poly.Points[Utils.mod(j - 1, poly.Points.Count)]))
+                            selectedPoint = poly.Points[Utils.mod(j - 1, poly.Points.Count)];
                         else if (Geometry.IsPointClicked(e, poly.Points[j]))
                             selectedPoint = poly.Points[j];
                         else
-                            selectedEdge = new Edge(poly.Points[mod(j-1,poly.Points.Count)], poly.Points[j]);
+                            selectedEdge = new Edge(poly.Points[Utils.mod(j-1,poly.Points.Count)], poly.Points[j]);
                         return true;
                     }
                 }
@@ -237,16 +237,16 @@ namespace lab1
             {
                 for(int i=0; i<poly.Points.Count; ++i)
                 {
-                    if (Geometry.IsEdgeClicked(e, new Edge(poly.Points[i], poly.Points[mod(i - 1, poly.Points.Count)])))
+                    if (Geometry.IsEdgeClicked(e, new Edge(poly.Points[i], poly.Points[Utils.mod(i - 1, poly.Points.Count)])))
                     {
-                        if (Geometry.IsPointClicked(e, poly.Points[mod(i - 1, poly.Points.Count)]))
-                            poly.Points.RemoveAt(mod(i - 1, poly.Points.Count));
+                        if (Geometry.IsPointClicked(e, poly.Points[Utils.mod(i - 1, poly.Points.Count)]))
+                            poly.Points.RemoveAt(Utils.mod(i - 1, poly.Points.Count));
                         else if (Geometry.IsPointClicked(e, poly.Points[i]))
                             poly.Points.RemoveAt(i);
                         else
                         {
                             poly.Points.RemoveAt(i);
-                            poly.Points.RemoveAt(mod(i - 1, poly.Points.Count));
+                            poly.Points.RemoveAt(Utils.mod(i - 1, poly.Points.Count));
                         }
                         CheckConditionsAndDraw(poly);
                         return true;
@@ -290,7 +290,7 @@ namespace lab1
                     using (Graphics g = Graphics.FromImage(newCanvas))
                     {
                         g.FillEllipse(Brushes.Black, point.X - radius, point.Y - radius, radius * 2, radius * 2);
-                        DrawLine(poly.Points[mod(i-1,poly.Points.Count)], point);
+                        DrawLine(poly.Points[Utils.mod(i-1,poly.Points.Count)], point);
                     }
                 }
                 using (Graphics g = Graphics.FromImage(newCanvas))
@@ -316,10 +316,6 @@ namespace lab1
             if(poly.Points.Count < 3)
                 poly.ShowBorder = false;
             DrawPolygons();
-        }
-        private int mod(int x, int m)
-        {
-            return (x % m + m) % m;
         }
         private void ChangePointCoordinates(PointF p, int i, float X, float Y)
         {

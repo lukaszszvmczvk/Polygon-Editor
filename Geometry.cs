@@ -20,6 +20,14 @@ namespace lab1
             this.B = b;
             this.C = c;
         }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Line line &&
+                   A == line.A &&
+                   B == line.B &&
+                   C == line.C;
+        }
     }
     public static class Geometry
     {
@@ -100,6 +108,7 @@ namespace lab1
             List<PointF> boundingPoints = new List<PointF>();
             Line[] lines = new Line[points.Count];
             int n = points.Count;
+            points = OrderPointList(points);
 
             for (int i = 0; i < n; i++)
             {
@@ -107,10 +116,18 @@ namespace lab1
                 var offsetLines = FindParallelLines(points[(i + 1) % n], points[(i + 2) % n],offset);
                 var offsetLine = offsetLines.l1;
                 var intersectionPoint = FindIntersection(offsetLine,segmentLine);
-                if (PointsDistance(new PointF(intersectionPoint.X, intersectionPoint.Y), points[i]) <
-                    PointsDistance(points[i], points[(i + 1) % n]))
+                if (Math.Sign(points[(i + 1) % n].X - points[i].X) == Math.Sign(points[(i + 1) % n].X - intersectionPoint.X) &&
+                    Math.Sign(points[(i + 1) % n].Y - points[i].Y) == Math.Sign(points[(i + 1) % n].Y - intersectionPoint.Y))
                 {
                     offsetLine = offsetLines.l2;
+                }
+                var orientation = Orientation(points[i], points[(i + 1) % n], points[(i + 2) % n]);
+                if (orientation == 2 || orientation == 0)
+                {
+                    if (offsetLine == offsetLines.l1)
+                        offsetLine = offsetLines.l2;
+                    else
+                        offsetLine = offsetLines.l1;
                 }
                 lines[i] = new Line(offsetLine.A, offsetLine.B, offsetLine.C);
             }
@@ -132,10 +149,6 @@ namespace lab1
         {
             (var x, var y) = ((l1.B * l2.C - l2.B * l1.C) / (l1.A * l2.B - l2.A * l1.B), (l1.C * l2.A - l2.C * l1.A) / (l1.A * l2.B - l2.A * l1.B));
             return new PointF(x, y);
-        }
-        public static double PointsDistance(PointF p1, PointF p2)
-        {
-            return Math.Sqrt((p1.X-p2.X)*(p1.X-p2.X) + (p1.Y-p2.Y)*(p1.Y-p2.Y));
         }
         public static (Line l1, Line l2) FindParallelLines(PointF p1, PointF p2, int offset)
         {
@@ -170,5 +183,29 @@ namespace lab1
 
             return (FindlLineEquation(cp1, cp3), FindlLineEquation(cp2, cp4));
         }
+        public static List<PointF> OrderPointList(List<PointF> points)
+        {
+            int n = points.Count;
+            var point = points.OrderByDescending(p => p.Y).ThenBy(p=> p.X).First();
+
+            var index = points.FindIndex(p => p == point);
+            var n1 = points[Utils.mod(index - 1, n)];
+            var n2 = points[Utils.mod(index + 1, n)];
+            var orientation = Orientation(n1, point, n2);
+            if (orientation == 2)
+                points.Reverse();
+
+            return points;
+        }
+        public static int Orientation(PointF p1, PointF p2, PointF p3)
+        {
+            int val = (int)((p2.Y - p1.Y) * (p3.X - p2.X)-(p2.X - p1.X) * (p3.Y - p2.Y));
+
+            if (val == 0)
+                return 0; 
+
+            return (val > 0) ? 1 : 2; // clock or counterclock wise
+        }
     }
+
 }
