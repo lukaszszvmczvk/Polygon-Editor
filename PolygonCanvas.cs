@@ -53,6 +53,7 @@ namespace lab1
         public List<Polygon> Polygons;
         private int radius = 5;
         public int offset { get; set; }
+        public bool UseBresenham { get; set; }
 
         /// <summary>
         ///  Edit mode variables
@@ -307,11 +308,98 @@ namespace lab1
         }
         private void DrawLine(PointF p1, PointF p2, Bitmap canvas)
         {
-            Pen blackPen = new Pen(Color.Black, 2);
-
-            using (var graphics = Graphics.FromImage(canvas))
+            if (UseBresenham)
+                Bresenham(p1, p2, canvas);
+            else
             {
-                graphics.DrawLine(blackPen, p1.X, p1.Y, p2.X, p2.Y);
+                Pen blackPen = new Pen(Color.Black, 1);
+
+                using (var graphics = Graphics.FromImage(canvas))
+                {
+                    graphics.DrawLine(blackPen, p1.X, p1.Y, p2.X, p2.Y);
+                }
+            }
+        }
+        void Bresenham(PointF p1, PointF p2, Bitmap canvas)
+        {
+            var x0 = p1.X; var y0 = p1.Y;
+            var x1 = p2.X; var y1 = p2.Y;
+
+            if(Math.Abs(y1 - y0) < Math.Abs(x1-x0))
+            {
+                if (x0 > x1)
+                    plotLineLow(x1, y1, x0, y0, canvas);
+                else
+                    plotLineLow(x0, y0, x1, y1, canvas);
+            }
+            else
+            {
+                if(y0>y1)
+                    plotLineHigh(x1,y1,x0,y0, canvas);
+                else
+                    plotLineHigh(x0, y0, x1,y1, canvas);
+            }
+        }
+        private void plotLineLow(float x0, float y0, float x1, float y1, Bitmap canvas)
+        {
+            Pen blackPen = new Pen(Color.Black, 1);
+            var dx = x1 - x0;
+            var dy = y1 - y0;
+            var yi = 1;
+
+            if(dy<0)
+            {
+                yi = -1;
+                dy = -dy;
+            }
+            var D = 2 * dy - dx;
+            var y = y0;
+            for(int x=(int)x0; x<=x1; ++x)
+            {
+                using (var graphics = Graphics.FromImage(canvas))
+                {
+                    graphics.DrawRectangle(blackPen, x, y, 1, 1);
+                }
+                if(D>0)
+                {
+                    y += yi;
+                    D += 2 * (dy - dx);
+                }
+                else
+                {
+                    D += 2 * dy;
+                }
+            }
+        }
+        private void plotLineHigh(float x0, float y0, float x1, float y1, Bitmap canvas)
+        {
+            Pen blackPen = new Pen(Color.Black, 1);
+            var dx = x1 - x0;
+            var dy = y1 - y0;
+            var xi = 1;
+
+            if (dx < 0)
+            {
+                xi = -1;
+                dx = -dx;
+            }
+            var D = 2 * dx - dy;
+            var x = x0;
+            for (int y = (int)y0; y <= y1; ++y)
+            {
+                using (var graphics = Graphics.FromImage(canvas))
+                {
+                    graphics.DrawRectangle(blackPen, x, y, 1, 1);
+                }
+                if (D > 0)
+                {
+                    x += xi;
+                    D += 2 * (dx - dy);
+                }
+                else
+                {
+                    D += 2 * dx;
+                }
             }
         }
         public void SetEgdeRelation(EdgeOrientation orientation)

@@ -32,6 +32,7 @@
             layoutPanel = new TableLayoutPanel();
             Canvas = new DoubleBufferedPictureBox();
             panel1 = new Panel();
+            bresenhamCheckBox = new CheckBox();
             offsetBox = new NumericUpDown();
             label1 = new Label();
             borderModeRadioButton = new RadioButton();
@@ -78,6 +79,7 @@
             // panel1
             // 
             panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            panel1.Controls.Add(bresenhamCheckBox);
             panel1.Controls.Add(offsetBox);
             panel1.Controls.Add(label1);
             panel1.Controls.Add(borderModeRadioButton);
@@ -89,6 +91,17 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(216, 547);
             panel1.TabIndex = 1;
+            // 
+            // bresenhamCheckBox
+            // 
+            bresenhamCheckBox.AutoSize = true;
+            bresenhamCheckBox.Location = new Point(15, 240);
+            bresenhamCheckBox.Name = "bresenhamCheckBox";
+            bresenhamCheckBox.Size = new Size(132, 24);
+            bresenhamCheckBox.TabIndex = 8;
+            bresenhamCheckBox.Text = "Use Bresenham";
+            bresenhamCheckBox.UseVisualStyleBackColor = true;
+            bresenhamCheckBox.CheckedChanged += bresenhamCheckBox_CheckedChanged;
             // 
             // offsetBox
             // 
@@ -218,5 +231,6 @@
         private DoubleBufferedPictureBox Canvas;
         private Label label1;
         private NumericUpDown offsetBox;
+        private CheckBox bresenhamCheckBox;
     }
 }

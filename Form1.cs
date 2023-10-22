@@ -68,9 +68,22 @@ namespace lab1
 
         private void offsetBox_ValueChanged(object sender, EventArgs e)
         {
-            if(polygonCanvas != null)
+            if (polygonCanvas != null)
             {
                 polygonCanvas.offset = (int)offsetBox.Value;
+                polygonCanvas.DrawPolygons();
+            }
+        }
+
+        private void bresenhamCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (polygonCanvas != null)
+            {
+                if (bresenhamCheckBox.Checked)
+                    polygonCanvas.UseBresenham = true;
+                else
+                    polygonCanvas.UseBresenham = false;
+
                 polygonCanvas.DrawPolygons();
             }
         }
