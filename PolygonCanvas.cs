@@ -61,6 +61,7 @@ namespace lab1
         private PointF? previousPoint = null;
         private PointF? selectedPoint = null;
         private Edge? selectedEdge = null;
+        private bool moveEdgeOrPoint = true;
 
         private Edge? edgeToSetRelation = null;
         private Polygon? polygonToSetRelation = null;
@@ -126,6 +127,7 @@ namespace lab1
             selectedPolygon = null;
             selectedPoint = null;
             selectedEdge = null;
+            moveEdgeOrPoint = true;
         }
         public void canvasMouseMove(object sender, MouseEventArgs e)
         {
@@ -133,7 +135,7 @@ namespace lab1
             {
                 (var X, var Y) = (e.X - previousPoint.Value.X, e.Y - previousPoint.Value.Y);
                 previousPoint = new PointF(e.X, e.Y);
-                if(selectedPoint != null)
+                if(selectedPoint != null && moveEdgeOrPoint)
                 {
                     for(int i=0; i<selectedPolygon.Points.Count; ++i)
                     {
@@ -147,7 +149,7 @@ namespace lab1
                     }
                     selectedPoint = new PointF(selectedPoint.Value.X + X, selectedPoint.Value.Y + Y);
                 }
-                else if(selectedEdge != null)
+                else if(selectedEdge != null && moveEdgeOrPoint)
                 {
                     var counter = 0;
                     for(int i=0; i<selectedPolygon.Points.Count; ++i)
@@ -229,17 +231,24 @@ namespace lab1
             var point = new PointF(e.X, e.Y);
             foreach (var poly in Polygons)
             {
-                for(int j = 0; j < poly.Points.Count; ++j)
+                var n = poly.Points.Count;
+                for(int j = 0; j < n; ++j)
                 {
-                    if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[Utils.mod(j - 1, poly.Points.Count)])))
+                    if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[Utils.mod(j - 1, n)])))
                     {
                         selectedPolygon = poly;
-                        if (Geometry.IsPointClicked(e, poly.Points[Utils.mod(j - 1, poly.Points.Count)]))
-                            selectedPoint = poly.Points[Utils.mod(j - 1, poly.Points.Count)];
+                        var condition = poly.EdgeRelations[Utils.mod(j - 2, n)] == EdgeOrientation.None && 
+                            poly.EdgeRelations[Utils.mod(j, n)] == EdgeOrientation.None &&
+                            poly.EdgeRelations[Utils.mod(j - 1, n)] == EdgeOrientation.None;
+                        if (!condition)
+                            moveEdgeOrPoint = false;
+
+                        if (Geometry.IsPointClicked(e, poly.Points[Utils.mod(j - 1, n)]))
+                            selectedPoint = poly.Points[Utils.mod(j - 1, n)];
                         else if (Geometry.IsPointClicked(e, poly.Points[j]))
                             selectedPoint = poly.Points[j];
                         else
-                            selectedEdge = new Edge(poly.Points[Utils.mod(j-1,poly.Points.Count)], poly.Points[j]);
+                            selectedEdge = new Edge(poly.Points[Utils.mod(j-1,n)], poly.Points[j]);
                         return true;
                     }
                 }

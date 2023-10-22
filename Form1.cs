@@ -16,7 +16,7 @@ namespace lab1
             deleteModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             borderModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
-            polygonCanvas = new PolygonCanvas(CanvasMode.Add, new List<PointF>(), Canvas, new List<Polygon>(),menuStrip);
+            polygonCanvas = new PolygonCanvas(CanvasMode.Add, new List<PointF>(), Canvas, new List<Polygon>(), menuStrip);
             polygonCanvas.offset = 20;
         }
 
