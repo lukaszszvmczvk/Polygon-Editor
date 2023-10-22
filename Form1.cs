@@ -8,13 +8,16 @@ namespace lab1
         public MainWindow()
         {
             InitializeComponent();
+            offsetBox.Minimum = 0;
+            offsetBox.Value = 20;
             addModeRadioButton.Checked = true;
             addModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             moveModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             deleteModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             borderModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
-            polygonCanvas = new PolygonCanvas(CanvasMode.Add, new List<PointF>(), Canvas, new List<Polygon>());
+            polygonCanvas = new PolygonCanvas(CanvasMode.Add, new List<PointF>(), Canvas, new List<Polygon>(),menuStrip);
+            polygonCanvas.offset = 20;
         }
 
         private void RadioButtonCheckedChanged(object? sender, EventArgs e)
@@ -51,6 +54,25 @@ namespace lab1
         {
             polygonCanvas.Clear();
             addModeRadioButton.Checked = true;
+        }
+
+        private void horizontalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            polygonCanvas.SetEgdeRelation(EdgeOrientation.Horizontal);
+        }
+
+        private void verticalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            polygonCanvas.SetEgdeRelation(EdgeOrientation.Vertical);
+        }
+
+        private void offsetBox_ValueChanged(object sender, EventArgs e)
+        {
+            if(polygonCanvas != null)
+            {
+                polygonCanvas.offset = (int)offsetBox.Value;
+                polygonCanvas.DrawPolygons();
+            }
         }
     }
     public class DoubleBufferedPictureBox : PictureBox

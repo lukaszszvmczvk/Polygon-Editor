@@ -103,8 +103,9 @@ namespace lab1
             var closest = new PointF();
             return FindDistanceToSegment(new PointF(e.X, e.Y), edge.p1, edge.p2, out closest) <= radius;
         }
-        public static List<PointF> CreateBoundedPolygon(List<PointF> points, int offset)
+        public static List<PointF> CreateBoundedPolygon(Polygon poly, int offset)
         {
+            var points = poly.Points;
             List<PointF> boundingPoints = new List<PointF>();
             Line[] lines = new Line[points.Count];
             int n = points.Count;
@@ -115,7 +116,15 @@ namespace lab1
                 var segmentLine = FindlLineEquation(points[i], points[(i + 1) % n]);
                 var offsetLines = FindParallelLines(points[(i + 1) % n], points[(i + 2) % n],offset);
                 var offsetLine = offsetLines.l1;
-                var intersectionPoint = FindIntersection(offsetLine,segmentLine);
+                var intersectionPoint = new PointF();
+                try
+                {
+                    intersectionPoint = FindIntersection(offsetLine,segmentLine);
+                }
+                catch
+                {
+                    return poly.BorderPoints;
+                }
                 if (Math.Sign(points[(i + 1) % n].X - points[i].X) == Math.Sign(points[(i + 1) % n].X - intersectionPoint.X) &&
                     Math.Sign(points[(i + 1) % n].Y - points[i].Y) == Math.Sign(points[(i + 1) % n].Y - intersectionPoint.Y))
                 {
@@ -147,7 +156,9 @@ namespace lab1
         }
         public static PointF FindIntersection(Line l1, Line l2)
         {
-            (var x, var y) = ((l1.B * l2.C - l2.B * l1.C) / (l1.A * l2.B - l2.A * l1.B), (l1.C * l2.A - l2.C * l1.A) / (l1.A * l2.B - l2.A * l1.B));
+            if(l1.A * l2.B == l2.A * l1.B)
+                throw new Exception();
+            (var x,var y) = ((l1.B * l2.C - l2.B * l1.C) / (l1.A * l2.B - l2.A * l1.B), (l1.C * l2.A - l2.C * l1.A) / (l1.A * l2.B - l2.A * l1.B));
             return new PointF(x, y);
         }
         public static (Line l1, Line l2) FindParallelLines(PointF p1, PointF p2, int offset)

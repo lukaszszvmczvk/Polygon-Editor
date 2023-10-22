@@ -28,17 +28,25 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             layoutPanel = new TableLayoutPanel();
             Canvas = new DoubleBufferedPictureBox();
             panel1 = new Panel();
+            offsetBox = new NumericUpDown();
+            label1 = new Label();
             borderModeRadioButton = new RadioButton();
             clearCanvasButton = new Button();
             deleteModeRadioButton = new RadioButton();
             moveModeRadioButton = new RadioButton();
             addModeRadioButton = new RadioButton();
+            menuStrip = new ContextMenuStrip(components);
+            horizontalToolStripMenuItem = new ToolStripMenuItem();
+            verticalToolStripMenuItem = new ToolStripMenuItem();
             layoutPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)Canvas).BeginInit();
             panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)offsetBox).BeginInit();
+            menuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // layoutPanel
@@ -70,6 +78,8 @@
             // panel1
             // 
             panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            panel1.Controls.Add(offsetBox);
+            panel1.Controls.Add(label1);
             panel1.Controls.Add(borderModeRadioButton);
             panel1.Controls.Add(clearCanvasButton);
             panel1.Controls.Add(deleteModeRadioButton);
@@ -79,6 +89,23 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(216, 547);
             panel1.TabIndex = 1;
+            // 
+            // offsetBox
+            // 
+            offsetBox.Location = new Point(95, 193);
+            offsetBox.Name = "offsetBox";
+            offsetBox.Size = new Size(68, 27);
+            offsetBox.TabIndex = 6;
+            offsetBox.ValueChanged += offsetBox_ValueChanged;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(37, 195);
+            label1.Name = "label1";
+            label1.Size = new Size(52, 20);
+            label1.TabIndex = 5;
+            label1.Text = "Offset:";
             // 
             // borderModeRadioButton
             // 
@@ -135,6 +162,27 @@
             addModeRadioButton.Text = "Add Mode";
             addModeRadioButton.UseVisualStyleBackColor = true;
             // 
+            // menuStrip
+            // 
+            menuStrip.ImageScalingSize = new Size(20, 20);
+            menuStrip.Items.AddRange(new ToolStripItem[] { horizontalToolStripMenuItem, verticalToolStripMenuItem });
+            menuStrip.Name = "menuStrip";
+            menuStrip.Size = new Size(149, 52);
+            // 
+            // horizontalToolStripMenuItem
+            // 
+            horizontalToolStripMenuItem.Name = "horizontalToolStripMenuItem";
+            horizontalToolStripMenuItem.Size = new Size(148, 24);
+            horizontalToolStripMenuItem.Text = "Horizontal";
+            horizontalToolStripMenuItem.Click += horizontalToolStripMenuItem_Click;
+            // 
+            // verticalToolStripMenuItem
+            // 
+            verticalToolStripMenuItem.Name = "verticalToolStripMenuItem";
+            verticalToolStripMenuItem.Size = new Size(148, 24);
+            verticalToolStripMenuItem.Text = "Vertical";
+            verticalToolStripMenuItem.Click += verticalToolStripMenuItem_Click;
+            // 
             // MainWindow
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -150,18 +198,25 @@
             ((System.ComponentModel.ISupportInitialize)Canvas).EndInit();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)offsetBox).EndInit();
+            menuStrip.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
 
         private TableLayoutPanel layoutPanel;
-        private PictureBox Canvas;
         private Panel panel1;
         private RadioButton deleteModeRadioButton;
         private RadioButton moveModeRadioButton;
         private RadioButton addModeRadioButton;
         private Button clearCanvasButton;
         private RadioButton borderModeRadioButton;
+        private ContextMenuStrip menuStrip;
+        private ToolStripMenuItem horizontalToolStripMenuItem;
+        private ToolStripMenuItem verticalToolStripMenuItem;
+        private DoubleBufferedPictureBox Canvas;
+        private Label label1;
+        private NumericUpDown offsetBox;
     }
 }

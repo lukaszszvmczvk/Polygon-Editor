@@ -15,15 +15,23 @@ namespace lab1
         Delete,
         Border
     }
+    public enum EdgeOrientation
+    {
+        None,
+        Horizontal,
+        Vertical
+    }
     public class Polygon
     {
         public bool ShowBorder { get; set; }
         public List<PointF> Points;
         public List<PointF> BorderPoints;
+        public EdgeOrientation[] EdgeRelations;
         public Polygon(List<PointF> points)
         {
             Points = points;
             ShowBorder = false;
+            EdgeRelations = new EdgeOrientation[points.Count];
         }
     }
     public class Edge
@@ -40,10 +48,11 @@ namespace lab1
     {
         public CanvasMode Mode;
         public List<PointF> Points;
-        public PictureBox Canvas;
+        private PictureBox Canvas;
+        private ContextMenuStrip MenuStrip;
         public List<Polygon> Polygons;
         private int radius = 5;
-        private int offset = 20;
+        public int offset { get; set; }
 
         /// <summary>
         ///  Edit mode variables
@@ -52,7 +61,11 @@ namespace lab1
         private PointF? previousPoint = null;
         private PointF? selectedPoint = null;
         private Edge? selectedEdge = null;
-        public PolygonCanvas(CanvasMode mode, List<PointF> points, PictureBox canvas, List<Polygon> polygons)
+
+        private Edge? edgeToSetRelation = null;
+        private Polygon? polygonToSetRelation = null;
+
+        public PolygonCanvas(CanvasMode mode, List<PointF> points, PictureBox canvas, List<Polygon> polygons, ContextMenuStrip menuStrip)
         {
             this.Mode = mode;
             this.Points = points;
@@ -61,6 +74,7 @@ namespace lab1
             this.Canvas.MouseUp += this.canvasMouseUp;
             this.Canvas.MouseMove += this.canvasMouseMove;
             Polygons = polygons;
+            this.MenuStrip = menuStrip;
         }
 
         public void canvasMouseDown(object sender, MouseEventArgs e)
@@ -92,6 +106,18 @@ namespace lab1
                             DrawPolygons();
                         }
                         break;
+                }
+            }
+            else if(e.Button == MouseButtons.Right)
+            {
+                if(SelectPointOrEdge(e))
+                {
+                    if(selectedEdge != null)
+                    {
+                        MenuStrip.Show(Canvas.PointToScreen(e.Location));
+                        edgeToSetRelation = selectedEdge;
+                        polygonToSetRelation = selectedPolygon;
+                    }
                 }
             }
         }
@@ -155,6 +181,7 @@ namespace lab1
                         if (selectedPolygon.Points[i] == selectedEdge.p1)
                         {
                             selectedPolygon.Points.Insert(i+1, new PointF(e.X,e.Y));
+                            selectedPolygon.EdgeRelations = new EdgeOrientation[polygonToSetRelation.Points.Count];
                             DrawPolygons();
                             return;
                         }
@@ -172,7 +199,7 @@ namespace lab1
                 g.FillEllipse(Brushes.Black, e.X - radius, e.Y - radius, radius * 2, radius * 2);
             }
             if (Points.Count > 1)
-                DrawLine(Points[Points.Count - 2], Points[Points.Count - 1]);
+                DrawLine(Points[Points.Count - 2], Points[Points.Count - 1], Canvas.Image as Bitmap);
             Canvas.Refresh();
         }
         private bool CheckIfPolygonIsCrated(MouseEventArgs e)
@@ -188,7 +215,7 @@ namespace lab1
                 {
                     g.FillPolygon(brush, Points.ToArray());
                 }
-                DrawLine(Points[Points.Count-1], Points[0]);
+                DrawLine(Points[Points.Count-1], Points[0], Canvas.Image as Bitmap);
                 Points = new List<PointF>();
                 return true;
             }
@@ -248,6 +275,7 @@ namespace lab1
                             poly.Points.RemoveAt(i);
                             poly.Points.RemoveAt(Utils.mod(i - 1, poly.Points.Count));
                         }
+                        poly.EdgeRelations = new EdgeOrientation[poly.Points.Count];
                         CheckConditionsAndDraw(poly);
                         return true;
                     }
@@ -268,20 +296,57 @@ namespace lab1
                 }
             }
         }
-        private void DrawLine(PointF p1, PointF p2)
+        private void DrawLine(PointF p1, PointF p2, Bitmap canvas)
         {
             Pen blackPen = new Pen(Color.Black, 2);
 
-            using (var graphics = Graphics.FromImage(Canvas.Image))
+            using (var graphics = Graphics.FromImage(canvas))
             {
                 graphics.DrawLine(blackPen, p1.X, p1.Y, p2.X, p2.Y);
             }
+        }
+        public void SetEgdeRelation(EdgeOrientation orientation)
+        {
+            var poly = polygonToSetRelation;
+            var edge = edgeToSetRelation;
+            var n = poly.Points.Count;
+            for(int i = 0; i < n; i++)
+            {
+                if ((poly.Points[i] == edge.p1 && poly.Points[(i+1)%n] == edge.p2) ||
+                    (poly.Points[i] == edge.p2 && poly.Points[(i + 1) % n] == edge.p1))
+                {
+                    if (poly.EdgeRelations[i] == orientation)
+                    {
+                        poly.EdgeRelations[i] = EdgeOrientation.None;
+                        break;
+                    }
+                    if (poly.EdgeRelations[Utils.mod(i - 1, n)] == orientation || poly.EdgeRelations[(i + 1) % n] == orientation)
+                        break;
+                    var id1 = i;
+                    var id2 = (i + 1) % n;
+                    if (poly.Points[id1].Y < poly.Points[id2].Y)
+                        (id1, id2) = (id2, id1);
+                    if(orientation == EdgeOrientation.Horizontal)
+                    {
+                        var offset = poly.Points[id2].X - poly.Points[id1].X;
+                        poly.Points[id2] = new PointF(poly.Points[id1].X + offset, poly.Points[id1].Y);
+                    }
+                    else
+                    {
+                        var offset = poly.Points[id2].Y- poly.Points[id1].Y;
+                        poly.Points[id2] = new PointF(poly.Points[id1].X, poly.Points[id1].Y + offset);
+                    }
+                    poly.EdgeRelations[i] = orientation;
+                }
+            }
+            DrawPolygons();
         }
         public void DrawPolygons()
         {
             var newCanvas = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             SolidBrush brush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
             Pen redPen = new Pen(Color.Red, 2);
+            Pen orangePen = new Pen(Color.Orange, 2);
             foreach (var poly in Polygons)
             {
                 for(int i=0; i<poly.Points.Count; ++i)
@@ -290,16 +355,26 @@ namespace lab1
                     using (Graphics g = Graphics.FromImage(newCanvas))
                     {
                         g.FillEllipse(Brushes.Black, point.X - radius, point.Y - radius, radius * 2, radius * 2);
-                        DrawLine(poly.Points[Utils.mod(i-1,poly.Points.Count)], point);
+                        DrawLine(poly.Points[Utils.mod(i-1,poly.Points.Count)], point, newCanvas);
+                        var x = (point.X + poly.Points[Utils.mod(i + 1, poly.Points.Count)].X) / 2;
+                        var y = (point.Y + poly.Points[Utils.mod(i + 1, poly.Points.Count)].Y) / 2;
+                        if (poly.EdgeRelations[i] == EdgeOrientation.Horizontal)
+                        {
+                            g.DrawRectangle(orangePen, x, y+2*radius, 15, 2);
+                        }
+                        else if (poly.EdgeRelations[i] == EdgeOrientation.Vertical)
+                        {
+                            g.DrawRectangle(orangePen, x+2*radius, y, 2, 15);
+                        }
                     }
                 }
                 using (Graphics g = Graphics.FromImage(newCanvas))
                 {
                     g.FillPolygon(brush, poly.Points.ToArray());
-                    if(poly.ShowBorder)
+                    if (poly.ShowBorder)
                     {
-                        poly.BorderPoints = Geometry.CreateBoundedPolygon(poly.Points, offset);
-                        g.DrawPolygon(redPen, poly.BorderPoints.Select(x => new Point((int)x.X,(int)x.Y)).ToArray());
+                        poly.BorderPoints = Geometry.CreateBoundedPolygon(poly, offset);
+                        g.DrawPolygon(redPen, poly.BorderPoints.Select(x => new Point((int)x.X, (int)x.Y)).ToArray());
                     }
                 }
             }
