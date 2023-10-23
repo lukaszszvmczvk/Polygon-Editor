@@ -105,7 +105,7 @@ namespace lab1
         }
         public static List<PointF> CreateBoundedPolygon(Polygon poly, int offset)
         {
-            var points = poly.Points;
+            var points = new List<PointF>(poly.Points);
             List<PointF> boundingPoints = new List<PointF>();
             Line[] lines = new Line[points.Count];
             int n = points.Count;

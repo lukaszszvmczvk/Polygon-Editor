@@ -60,12 +60,11 @@ namespace lab1
         /// </summary>
         private Polygon? selectedPolygon = null;
         private PointF? previousPoint = null;
-        private PointF? selectedPoint = null;
-        private Edge? selectedEdge = null;
-        private bool moveEdgeOrPoint = true;
+        private int selectedPointIndex = -1;
+        private int selectedEdgeStartIndex = -1;
 
-        private Edge? edgeToSetRelation = null;
         private Polygon? polygonToSetRelation = null;
+        private int edgeIndexToSetRelation = -1;
 
         public PolygonCanvas(CanvasMode mode, List<PointF> points, PictureBox canvas, List<Polygon> polygons, ContextMenuStrip menuStrip)
         {
@@ -114,10 +113,10 @@ namespace lab1
             {
                 if(SelectPointOrEdge(e))
                 {
-                    if(selectedEdge != null)
+                    if(selectedEdgeStartIndex != -1)
                     {
                         MenuStrip.Show(Canvas.PointToScreen(e.Location));
-                        edgeToSetRelation = selectedEdge;
+                        edgeIndexToSetRelation = selectedEdgeStartIndex;
                         polygonToSetRelation = selectedPolygon;
                     }
                 }
@@ -126,9 +125,8 @@ namespace lab1
         public void canvasMouseUp(object sender, MouseEventArgs e)
         {
             selectedPolygon = null;
-            selectedPoint = null;
-            selectedEdge = null;
-            moveEdgeOrPoint = true;
+            selectedEdgeStartIndex = -1;
+            selectedPointIndex = -1;
         }
         public void canvasMouseMove(object sender, MouseEventArgs e)
         {
@@ -136,37 +134,36 @@ namespace lab1
             {
                 (var X, var Y) = (e.X - previousPoint.Value.X, e.Y - previousPoint.Value.Y);
                 previousPoint = new PointF(e.X, e.Y);
-                if(selectedPoint != null && moveEdgeOrPoint)
+                if(selectedPointIndex != -1)
                 {
-                    for(int i=0; i<selectedPolygon.Points.Count; ++i)
-                    {
-                        var p = selectedPolygon.Points[i];
-                        if (p.X == selectedPoint.Value.X && p.Y == selectedPoint.Value.Y)
-                        {
-                            ChangePointCoordinates(p, i, X, Y);
-                            break;
-                        }
-
-                    }
-                    selectedPoint = new PointF(selectedPoint.Value.X + X, selectedPoint.Value.Y + Y);
+                    int i = selectedPointIndex;
+                    ChangePointCoordinates(i, X, Y);
+                    if (selectedPolygon.EdgeRelations[i] == EdgeOrientation.Horizontal)
+                        ChangePointCoordinates(i + 1, 0, Y);
+                    if (selectedPolygon.EdgeRelations[i] == EdgeOrientation.Vertical)
+                        ChangePointCoordinates(i + 1, X, 0);
+                    if (selectedPolygon.EdgeRelations[Utils.mod(i - 1, selectedPolygon.Points.Count)] == EdgeOrientation.Horizontal)
+                        ChangePointCoordinates(i - 1, 0, Y);
+                    if (selectedPolygon.EdgeRelations[Utils.mod(i - 1, selectedPolygon.Points.Count)] == EdgeOrientation.Vertical)
+                        ChangePointCoordinates(i - 1, X, 0);
                 }
-                else if(selectedEdge != null && moveEdgeOrPoint)
+                else if(selectedEdgeStartIndex != -1)
                 {
                     var counter = 0;
-                    for(int i=0; i<selectedPolygon.Points.Count; ++i)
+                    for(int j = selectedEdgeStartIndex; j <= selectedEdgeStartIndex+1; ++j)
                     {
-                        var p = selectedPolygon.Points[i];
-                        if ((p.X == selectedEdge.p1.X && p.Y == selectedEdge.p1.Y) ||
-                               (p.X == selectedEdge.p2.X && p.Y == selectedEdge.p2.Y))
-                        {
-                            ++counter;
-                            ChangePointCoordinates(p, i, X, Y);
-                            if (counter == 2)
-                                break;
-                        }
+                        int i = Utils.mod(j, selectedPolygon.Points.Count);
+                        ++counter;
+                        ChangePointCoordinates(i, X, Y);
+                        if (selectedPolygon.EdgeRelations[i] == EdgeOrientation.Horizontal && counter == 2)
+                            ChangePointCoordinates(i + 1, 0, Y);
+                        if (selectedPolygon.EdgeRelations[i] == EdgeOrientation.Vertical && counter == 2)
+                            ChangePointCoordinates(i + 1, X, 0);
+                        if (selectedPolygon.EdgeRelations[Utils.mod(i - 1, selectedPolygon.Points.Count)] == EdgeOrientation.Horizontal && counter == 1)
+                            ChangePointCoordinates(i - 1, 0, Y);
+                        if (selectedPolygon.EdgeRelations[Utils.mod(i - 1, selectedPolygon.Points.Count)] == EdgeOrientation.Vertical && counter == 1)
+                            ChangePointCoordinates(i - 1, X, 0);
                     }
-                    selectedEdge.p1 = new PointF(selectedEdge.p1.X+X, selectedEdge.p1.Y+Y);
-                    selectedEdge.p2 = new PointF(selectedEdge.p2.X+X, selectedEdge.p2.Y+Y);
                 }
                 else
                     selectedPolygon.Points = selectedPolygon.Points.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
@@ -177,18 +174,12 @@ namespace lab1
         {
             if(Points.Count == 0 && SelectPointOrEdge(e))
             {
-                if(selectedEdge != null)
+                if(selectedEdgeStartIndex != -1)
                 {
-                    for(int i=0; i<selectedPolygon.Points.Count; i++)
-                    {
-                        if (selectedPolygon.Points[i] == selectedEdge.p1)
-                        {
-                            selectedPolygon.Points.Insert(i+1, new PointF(e.X,e.Y));
-                            selectedPolygon.EdgeRelations = new EdgeOrientation[polygonToSetRelation.Points.Count];
-                            DrawPolygons();
-                            return;
-                        }
-                    }
+                    int i = selectedEdgeStartIndex;
+                    selectedPolygon.Points.Insert(i + 1, new PointF(e.X, e.Y));
+                    selectedPolygon.EdgeRelations = new EdgeOrientation[selectedPolygon.Points.Count];
+                    DrawPolygons();
                 }
             }
             if (CheckIfPolygonIsCrated(e))
@@ -238,18 +229,13 @@ namespace lab1
                     if(Geometry.IsEdgeClicked(e,new Edge(poly.Points[j], poly.Points[Utils.mod(j - 1, n)])))
                     {
                         selectedPolygon = poly;
-                        var condition = poly.EdgeRelations[Utils.mod(j - 2, n)] == EdgeOrientation.None && 
-                            poly.EdgeRelations[Utils.mod(j, n)] == EdgeOrientation.None &&
-                            poly.EdgeRelations[Utils.mod(j - 1, n)] == EdgeOrientation.None;
-                        if (!condition)
-                            moveEdgeOrPoint = false;
 
                         if (Geometry.IsPointClicked(e, poly.Points[Utils.mod(j - 1, n)]))
-                            selectedPoint = poly.Points[Utils.mod(j - 1, n)];
+                            selectedPointIndex = Utils.mod(j - 1, n);
                         else if (Geometry.IsPointClicked(e, poly.Points[j]))
-                            selectedPoint = poly.Points[j];
+                            selectedPointIndex = j;
                         else
-                            selectedEdge = new Edge(poly.Points[Utils.mod(j-1,n)], poly.Points[j]);
+                            selectedEdgeStartIndex = Utils.mod(j - 1, n);
                         return true;
                     }
                 }
@@ -320,7 +306,7 @@ namespace lab1
                 }
             }
         }
-        void Bresenham(PointF p1, PointF p2, Bitmap canvas)
+        private void Bresenham(PointF p1, PointF p2, Bitmap canvas)
         {
             var x0 = p1.X; var y0 = p1.Y;
             var x1 = p2.X; var y1 = p2.Y;
@@ -405,36 +391,32 @@ namespace lab1
         public void SetEgdeRelation(EdgeOrientation orientation)
         {
             var poly = polygonToSetRelation;
-            var edge = edgeToSetRelation;
             var n = poly.Points.Count;
-            for(int i = 0; i < n; i++)
+            for(int j = edgeIndexToSetRelation; j <= edgeIndexToSetRelation+1; j++)
             {
-                if ((poly.Points[i] == edge.p1 && poly.Points[(i+1)%n] == edge.p2) ||
-                    (poly.Points[i] == edge.p2 && poly.Points[(i + 1) % n] == edge.p1))
-                {
-                    if (poly.EdgeRelations[i] == orientation)
+                int i = Utils.mod(j, polygonToSetRelation.Points.Count);
+                if (poly.EdgeRelations[i] == orientation)
                     {
                         poly.EdgeRelations[i] = EdgeOrientation.None;
                         break;
                     }
-                    if (poly.EdgeRelations[Utils.mod(i - 1, n)] == orientation || poly.EdgeRelations[(i + 1) % n] == orientation)
-                        break;
-                    var id1 = i;
-                    var id2 = (i + 1) % n;
-                    if (poly.Points[id1].Y < poly.Points[id2].Y)
-                        (id1, id2) = (id2, id1);
-                    if(orientation == EdgeOrientation.Horizontal)
-                    {
-                        var offset = poly.Points[id2].X - poly.Points[id1].X;
-                        poly.Points[id2] = new PointF(poly.Points[id1].X + offset, poly.Points[id1].Y);
-                    }
-                    else
-                    {
-                        var offset = poly.Points[id2].Y- poly.Points[id1].Y;
-                        poly.Points[id2] = new PointF(poly.Points[id1].X, poly.Points[id1].Y + offset);
-                    }
-                    poly.EdgeRelations[i] = orientation;
+                if (poly.EdgeRelations[Utils.mod(i - 1, n)] == orientation || poly.EdgeRelations[(i + 1) % n] == orientation)
+                    break;
+                var id1 = i;
+                var id2 = (i + 1) % n;
+                if (poly.Points[id1].Y < poly.Points[id2].Y)
+                    (id1, id2) = (id2, id1);
+                if(orientation == EdgeOrientation.Horizontal)
+                {
+                    var offset = poly.Points[id2].X - poly.Points[id1].X;
+                    poly.Points[id2] = new PointF(poly.Points[id1].X + offset, poly.Points[id1].Y);
                 }
+                else
+                {
+                    var offset = poly.Points[id2].Y- poly.Points[id1].Y;
+                    poly.Points[id2] = new PointF(poly.Points[id1].X, poly.Points[id1].Y + offset);
+                }
+                poly.EdgeRelations[i] = orientation;
             }
             DrawPolygons();
         }
@@ -489,19 +471,21 @@ namespace lab1
                 poly.ShowBorder = false;
             DrawPolygons();
         }
-        private void ChangePointCoordinates(PointF p, int i, float X, float Y)
+        private void ChangePointCoordinates(int i, float X, float Y)
         {
+            var id = Utils.mod(i, selectedPolygon.Points.Count);
+            var p = selectedPolygon.Points[id];
             p.X += X;
             p.Y += Y;
-            selectedPolygon.Points[i] = p;
+            selectedPolygon.Points[id] = p;
         }
         public void Clear()
         {
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             Polygons.Clear();
             Points.Clear();
-            selectedEdge = null;
-            selectedPoint = null;
+            selectedPointIndex = -1;
+            selectedPointIndex = -1;
             selectedPolygon = null;
             Mode = CanvasMode.Add;
         }
