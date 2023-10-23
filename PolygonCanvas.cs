@@ -66,6 +66,8 @@ namespace lab1
         private Polygon? polygonToSetRelation = null;
         private int edgeIndexToSetRelation = -1;
 
+        private PointF currentPosition;
+
         public PolygonCanvas(CanvasMode mode, List<PointF> points, PictureBox canvas, List<Polygon> polygons, ContextMenuStrip menuStrip)
         {
             this.Mode = mode;
@@ -76,6 +78,7 @@ namespace lab1
             this.Canvas.MouseMove += this.canvasMouseMove;
             Polygons = polygons;
             this.MenuStrip = menuStrip;
+            currentPosition = new PointF(0, 0);
         }
 
         public void canvasMouseDown(object sender, MouseEventArgs e)
@@ -130,11 +133,12 @@ namespace lab1
         }
         public void canvasMouseMove(object sender, MouseEventArgs e)
         {
-            if(Mode == CanvasMode.Move && selectedPolygon != null)
+            currentPosition = new PointF(e.X, e.Y);
+            if (Mode == CanvasMode.Move && selectedPolygon != null)
             {
                 (var X, var Y) = (e.X - previousPoint.Value.X, e.Y - previousPoint.Value.Y);
                 previousPoint = new PointF(e.X, e.Y);
-                if(selectedPointIndex != -1)
+                if (selectedPointIndex != -1)
                 {
                     int i = selectedPointIndex;
                     ChangePointCoordinates(i, X, Y);
@@ -147,10 +151,10 @@ namespace lab1
                     if (selectedPolygon.EdgeRelations[Utils.mod(i - 1, selectedPolygon.Points.Count)] == EdgeOrientation.Vertical)
                         ChangePointCoordinates(i - 1, X, 0);
                 }
-                else if(selectedEdgeStartIndex != -1)
+                else if (selectedEdgeStartIndex != -1)
                 {
                     var counter = 0;
-                    for(int j = selectedEdgeStartIndex; j <= selectedEdgeStartIndex+1; ++j)
+                    for (int j = selectedEdgeStartIndex; j <= selectedEdgeStartIndex + 1; ++j)
                     {
                         int i = Utils.mod(j, selectedPolygon.Points.Count);
                         ++counter;
@@ -169,6 +173,8 @@ namespace lab1
                     selectedPolygon.Points = selectedPolygon.Points.Select((p) => new PointF(p.X + X, p.Y + Y)).ToList();
                 DrawPolygons();
             }
+            else if (Mode == CanvasMode.Add)
+                DrawPolygons();
         }
         private void AddPoint(MouseEventArgs e)
         {
@@ -183,18 +189,9 @@ namespace lab1
                 }
             }
             if (CheckIfPolygonIsCrated(e))
-            {
-                Canvas.Refresh();
                 return;
-            }
             Points.Add(new PointF(e.X, e.Y));
-            using (Graphics g = Graphics.FromImage(Canvas.Image))
-            {
-                g.FillEllipse(Brushes.Black, e.X - radius, e.Y - radius, radius * 2, radius * 2);
-            }
-            if (Points.Count > 1)
-                DrawLine(Points[Points.Count - 2], Points[Points.Count - 1], Canvas.Image as Bitmap);
-            Canvas.Refresh();
+            DrawPolygons();
         }
         private bool CheckIfPolygonIsCrated(MouseEventArgs e)
         {
@@ -205,12 +202,8 @@ namespace lab1
             {
                 SolidBrush brush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
                 Polygons.Add(new Polygon(Points));
-                using (Graphics g = Graphics.FromImage(Canvas.Image))
-                {
-                    g.FillPolygon(brush, Points.ToArray());
-                }
-                DrawLine(Points[Points.Count-1], Points[0], Canvas.Image as Bitmap);
                 Points = new List<PointF>();
+                DrawPolygons();
                 return true;
             }
             else
@@ -218,6 +211,7 @@ namespace lab1
                 return false;
             }
         }
+        
         private bool SelectPointOrEdge(MouseEventArgs e)
         {
             var point = new PointF(e.X, e.Y);
@@ -426,6 +420,20 @@ namespace lab1
             SolidBrush brush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
             Pen redPen = new Pen(Color.Red, 2);
             Pen orangePen = new Pen(Color.Orange, 2);
+            if(Points.Count > 0)
+            {
+                for(int i=0; i<Points.Count; i++)
+                {
+                    using (Graphics g = Graphics.FromImage(newCanvas))
+                    {
+                        g.FillEllipse(Brushes.Black, Points[i].X - radius, Points[i].Y - radius, radius * 2, radius * 2);
+                        if(i > 0)
+                            DrawLine(Points[i], Points[i-1], newCanvas);
+                    }
+                }
+                if(Mode == CanvasMode.Add)
+                    DrawLine(currentPosition, Points[Points.Count-1], newCanvas);
+            }
             foreach (var poly in Polygons)
             {
                 for(int i=0; i<poly.Points.Count; ++i)
