@@ -176,6 +176,7 @@ namespace lab1
             else if (Mode == CanvasMode.Add)
                 DrawPolygons();
         }
+        
         private void AddPoint(MouseEventArgs e)
         {
             if(Points.Count == 0 && SelectPointOrEdge(e))
