@@ -188,6 +188,7 @@ namespace lab1
                     selectedPolygon.EdgeRelations = new EdgeOrientation[selectedPolygon.Points.Count];
                     DrawPolygons();
                 }
+                return;
             }
             if (CheckIfPolygonIsCrated(e))
                 return;
@@ -466,6 +467,7 @@ namespace lab1
                     }
                 }
             }
+            Canvas.Image.Dispose();
             Canvas.Image = newCanvas;
             Canvas.Refresh();
         }
@@ -490,6 +492,7 @@ namespace lab1
         }
         public void Clear()
         {
+            Canvas.Image.Dispose();
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             Polygons.Clear();
             Points.Clear();

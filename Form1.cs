@@ -46,6 +46,7 @@ namespace lab1
 
         private void MainWindow_Resize(object sender, EventArgs e)
         {
+            Canvas.Image.Dispose();
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             polygonCanvas.DrawPolygons();
         }
