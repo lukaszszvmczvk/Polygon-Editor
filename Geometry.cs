@@ -125,7 +125,17 @@ namespace lab1
                 {
                     return poly.BorderPoints;
                 }
-                if (Math.Sign(points[(i + 1) % n].X - points[i].X) == Math.Sign(points[(i + 1) % n].X - intersectionPoint.X) &&
+                if(points[(i + 1) % n].X - points[i].X == 0)
+                {
+                    if(Math.Sign(points[(i + 1) % n].Y - points[i].Y) == Math.Sign(points[(i + 1) % n].Y - intersectionPoint.Y))
+                        offsetLine = offsetLines.l2;
+                }
+                else if(points[(i + 1) % n].Y - points[i].Y == 0)
+                {
+                    if(Math.Sign(points[(i + 1) % n].X - points[i].X) == Math.Sign(points[(i + 1) % n].X - intersectionPoint.X))
+                        offsetLine = offsetLines.l2;
+                }
+                else if (Math.Sign(points[(i + 1) % n].X - points[i].X) == Math.Sign(points[(i + 1) % n].X - intersectionPoint.X) &&
                     Math.Sign(points[(i + 1) % n].Y - points[i].Y) == Math.Sign(points[(i + 1) % n].Y - intersectionPoint.Y))
                 {
                     offsetLine = offsetLines.l2;
