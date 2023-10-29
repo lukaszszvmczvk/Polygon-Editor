@@ -79,6 +79,35 @@ namespace lab1
             Polygons = polygons;
             this.MenuStrip = menuStrip;
             currentPosition = new PointF(0, 0);
+            DefineStartPolygons();
+        }
+
+        private void DefineStartPolygons()
+        {
+            Polygons = new List<Polygon>();
+            Polygons.Add(new Polygon(new List<PointF>
+            {
+               new PointF(100, 100),
+               new PointF(100, 300),
+               new PointF(400,300)
+            }));
+            Polygons[0].EdgeRelations[0] = EdgeOrientation.Vertical;
+            Polygons[0].EdgeRelations[1] = EdgeOrientation.Horizontal;
+
+
+            Polygons.Add(new Polygon(new List<PointF>
+            {
+               new PointF(600, 200),
+               new PointF(600, 400),
+               new PointF(500, 400),
+               new PointF(500,200)
+            }));
+            Polygons[1].EdgeRelations[0] = EdgeOrientation.Vertical;
+            Polygons[1].EdgeRelations[1] = EdgeOrientation.Horizontal;
+            Polygons[1].EdgeRelations[2] = EdgeOrientation.Vertical;
+            Polygons[1].EdgeRelations[3] = EdgeOrientation.Horizontal;
+
+            DrawPolygons();
         }
 
         public void canvasMouseDown(object sender, MouseEventArgs e)
