@@ -32,10 +32,12 @@ namespace lab1
     public static class Geometry
     {
         private static int radius = 5;
-        public static double FindDistanceToSegment(PointF pt, PointF p1, PointF p2, out PointF closest)
+        private static int err = 2;
+        public static double FindDistanceToSegment(PointF pt, PointF p1, PointF p2)
         {
             float dx = p2.X - p1.X;
             float dy = p2.Y - p1.Y;
+            PointF closest = new PointF();
             if ((dx == 0) && (dy == 0))
             {
                 // It's a point not a line segment.
@@ -100,8 +102,7 @@ namespace lab1
         }
         public static bool IsEdgeClicked(MouseEventArgs e, Edge edge)
         {
-            var closest = new PointF();
-            return FindDistanceToSegment(new PointF(e.X, e.Y), edge.p1, edge.p2, out closest) <= radius;
+            return FindDistanceToSegment(new PointF(e.X, e.Y), edge.p1, edge.p2) <= radius;
         }
         public static List<PointF> CreateBoundedPolygon(Polygon poly, int offset)
         {
@@ -152,8 +153,26 @@ namespace lab1
             }
             for (int i = 0; i < lines.Length; ++i)
             {
-                var intersectionPoint = FindIntersection(lines[i], lines[(i+1)%n]);
-                boundingPoints.Add(new PointF(intersectionPoint.X, intersectionPoint.Y));
+                var intersectionPoint = new PointF();
+                try
+                {
+                    intersectionPoint = FindIntersection(lines[i], lines[(i+1)%n]);
+                }
+                catch
+                {
+                    return poly.BorderPoints;
+                }
+                bool flag = true;
+                for(int j=0; j<n; ++j)
+                {
+                    if (FindDistanceToSegment(intersectionPoint, points[j], points[(j+1)%n]) < offset - err)
+                    {
+                        flag = false; 
+                        break;
+                    }    
+                }
+                if(flag)
+                    boundingPoints.Add(new PointF(intersectionPoint.X, intersectionPoint.Y));
             }
             return boundingPoints;
         }
