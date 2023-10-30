@@ -339,8 +339,8 @@ namespace lab1
         // Source: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
         private void Bresenham(PointF p1, PointF p2, Bitmap canvas, Pen pen)
         {
-            var x0 = p1.X; var y0 = p1.Y;
-            var x1 = p2.X; var y1 = p2.Y;
+            var x0 = (int)p1.X; var y0 = (int)p1.Y;
+            var x1 = (int)p2.X; var y1 = (int)p2.Y;
 
             if(Math.Abs(y1 - y0) < Math.Abs(x1-x0))
             {
@@ -357,7 +357,7 @@ namespace lab1
                     plotLineHigh(x0, y0, x1,y1, canvas, pen);
             }
         }
-        private void plotLineLow(float x0, float y0, float x1, float y1, Bitmap canvas, Pen pen)
+        private void plotLineLow(int x0, int y0, int x1, int y1, Bitmap canvas, Pen pen)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -370,7 +370,7 @@ namespace lab1
             }
             var D = 2 * dy - dx;
             var y = y0;
-            for(int x=(int)x0; x<=x1; ++x)
+            for(int x=x0; x<=x1; ++x)
             {
                 using (var graphics = Graphics.FromImage(canvas))
                 {
@@ -387,7 +387,7 @@ namespace lab1
                 }
             }
         }
-        private void plotLineHigh(float x0, float y0, float x1, float y1, Bitmap canvas, Pen pen)
+        private void plotLineHigh(int x0, int y0, int x1, int y1, Bitmap canvas, Pen pen)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -400,7 +400,7 @@ namespace lab1
             }
             var D = 2 * dx - dy;
             var x = x0;
-            for (int y = (int)y0; y <= y1; ++y)
+            for (int y = y0; y <= y1; ++y)
             {
                 using (var graphics = Graphics.FromImage(canvas))
                 {
