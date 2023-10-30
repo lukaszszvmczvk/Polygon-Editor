@@ -323,23 +323,21 @@ namespace lab1
                 }
             }
         }
-        private void DrawLine(PointF p1, PointF p2, Bitmap canvas)
+        private void DrawLine(PointF p1, PointF p2, Bitmap canvas, Pen pen)
         {
             if (UseBresenham)
-                Bresenham(p1, p2, canvas);
+                Bresenham(p1, p2, canvas,pen);
             else
             {
-                Pen blackPen = new Pen(Color.Black, 1);
-
                 using (var graphics = Graphics.FromImage(canvas))
                 {
-                    graphics.DrawLine(blackPen, p1.X, p1.Y, p2.X, p2.Y);
+                    graphics.DrawLine(pen, p1.X, p1.Y, p2.X, p2.Y);
                 }
             }
         }
 
         // Source: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-        private void Bresenham(PointF p1, PointF p2, Bitmap canvas)
+        private void Bresenham(PointF p1, PointF p2, Bitmap canvas, Pen pen)
         {
             var x0 = p1.X; var y0 = p1.Y;
             var x1 = p2.X; var y1 = p2.Y;
@@ -347,21 +345,20 @@ namespace lab1
             if(Math.Abs(y1 - y0) < Math.Abs(x1-x0))
             {
                 if (x0 > x1)
-                    plotLineLow(x1, y1, x0, y0, canvas);
+                    plotLineLow(x1, y1, x0, y0, canvas, pen);
                 else
-                    plotLineLow(x0, y0, x1, y1, canvas);
+                    plotLineLow(x0, y0, x1, y1, canvas, pen);
             }
             else
             {
                 if(y0>y1)
-                    plotLineHigh(x1,y1,x0,y0, canvas);
+                    plotLineHigh(x1,y1,x0,y0, canvas, pen);
                 else
-                    plotLineHigh(x0, y0, x1,y1, canvas);
+                    plotLineHigh(x0, y0, x1,y1, canvas, pen);
             }
         }
-        private void plotLineLow(float x0, float y0, float x1, float y1, Bitmap canvas)
+        private void plotLineLow(float x0, float y0, float x1, float y1, Bitmap canvas, Pen pen)
         {
-            Pen blackPen = new Pen(Color.Black, 1);
             var dx = x1 - x0;
             var dy = y1 - y0;
             var yi = 1;
@@ -377,7 +374,7 @@ namespace lab1
             {
                 using (var graphics = Graphics.FromImage(canvas))
                 {
-                    graphics.DrawRectangle(blackPen, x, y, 1, 1);
+                    graphics.DrawEllipse(pen, x, y, 1, 1);
                 }
                 if(D>0)
                 {
@@ -390,9 +387,8 @@ namespace lab1
                 }
             }
         }
-        private void plotLineHigh(float x0, float y0, float x1, float y1, Bitmap canvas)
+        private void plotLineHigh(float x0, float y0, float x1, float y1, Bitmap canvas, Pen pen)
         {
-            Pen blackPen = new Pen(Color.Black, 1);
             var dx = x1 - x0;
             var dy = y1 - y0;
             var xi = 1;
@@ -408,7 +404,7 @@ namespace lab1
             {
                 using (var graphics = Graphics.FromImage(canvas))
                 {
-                    graphics.DrawRectangle(blackPen, x, y, 1, 1);
+                    graphics.DrawEllipse(pen, x, y, 1, 1);
                 }
                 if (D > 0)
                 {
@@ -457,6 +453,7 @@ namespace lab1
             SolidBrush brush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
             Pen redPen = new Pen(Color.Red, 2);
             Pen orangePen = new Pen(Color.Orange, 2);
+            Pen blackPen = new Pen(Color.Black, 2);
             if(Points.Count > 0)
             {
                 for(int i=0; i<Points.Count; i++)
@@ -465,11 +462,11 @@ namespace lab1
                     {
                         g.FillEllipse(Brushes.Black, Points[i].X - radius, Points[i].Y - radius, radius * 2, radius * 2);
                         if(i > 0)
-                            DrawLine(Points[i], Points[i-1], newCanvas);
+                            DrawLine(Points[i], Points[i-1], newCanvas,blackPen);
                     }
                 }
                 if(Mode == CanvasMode.Add)
-                    DrawLine(currentPosition, Points[Points.Count-1], newCanvas);
+                    DrawLine(currentPosition, Points[Points.Count-1], newCanvas, blackPen);
             }
             foreach (var poly in Polygons)
             {
@@ -479,7 +476,7 @@ namespace lab1
                     using (Graphics g = Graphics.FromImage(newCanvas))
                     {
                         g.FillEllipse(Brushes.Black, point.X - radius, point.Y - radius, radius * 2, radius * 2);
-                        DrawLine(poly.Points[Utils.mod(i-1,poly.Points.Count)], point, newCanvas);
+                        DrawLine(poly.Points[Utils.mod(i-1,poly.Points.Count)], point, newCanvas,blackPen);
                         var x = (point.X + poly.Points[Utils.mod(i + 1, poly.Points.Count)].X) / 2;
                         var y = (point.Y + poly.Points[Utils.mod(i + 1, poly.Points.Count)].Y) / 2;
                         if (poly.EdgeRelations[i] == EdgeOrientation.Horizontal)
@@ -498,7 +495,18 @@ namespace lab1
                     if (poly.ShowBorder)
                     {
                         poly.BorderPoints = Geometry.CreateBoundedPolygon(poly, Offset);
-                        g.DrawPolygon(redPen, poly.BorderPoints.Select(x => new Point((int)x.X, (int)x.Y)).ToArray());
+                        var borderPoints = poly.BorderPoints.Select(x => new Point((int)x.X, (int)x.Y)).ToArray();
+                        if (UseBresenham == false)
+                        { 
+                            g.DrawPolygon(redPen,borderPoints);
+                        }
+                        else
+                        {
+                            for(int i = 0; i < borderPoints.Length; i++)
+                            {
+                                DrawLine(borderPoints[i], borderPoints[(i + 1) % borderPoints.Length], newCanvas, redPen);
+                            }
+                        }
                     }
                 }
             }

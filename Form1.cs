@@ -17,7 +17,7 @@ namespace lab1
             borderModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             polygonCanvas = new PolygonCanvas(CanvasMode.Add, new List<PointF>(), Canvas, new List<Polygon>(), menuStrip);
-            polygonCanvas.offset = 20;
+            polygonCanvas.Offset = 20;
         }
 
         private void RadioButtonCheckedChanged(object? sender, EventArgs e)
@@ -71,7 +71,7 @@ namespace lab1
         {
             if (polygonCanvas != null)
             {
-                polygonCanvas.offset = (int)offsetBox.Value;
+                polygonCanvas.Offset = (int)offsetBox.Value;
                 polygonCanvas.DrawPolygons();
             }
         }
