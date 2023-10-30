@@ -21,38 +21,46 @@ namespace lab1
         Horizontal,
         Vertical
     }
-    public class Polygon
-    {
-        public bool ShowBorder { get; set; }
-        public List<PointF> Points;
-        public List<PointF> BorderPoints;
-        public EdgeOrientation[] EdgeRelations;
-        public Polygon(List<PointF> points)
-        {
-            Points = points;
-            ShowBorder = false;
-            EdgeRelations = new EdgeOrientation[points.Count];
-        }
-    }
     public class Edge
     {
-        public PointF p1;
-        public PointF p2;
+        public PointF p1 { get; set; }
+        public PointF p2 { get; set; }
         public Edge(PointF p1, PointF p2)
         {
             this.p1 = p1;
             this.p2 = p2;
         }
     }
+    public class Polygon
+    {
+        public bool ShowBorder { get; set; }
+        public List<PointF> Points { get; set; }
+        public List<PointF> BorderPoints { get; set; }
+        public EdgeOrientation[] EdgeRelations { get; set; }
+        public Polygon(List<PointF> points)
+        {
+            Points = points;
+            ShowBorder = false;
+            EdgeRelations = new EdgeOrientation[points.Count];
+            BorderPoints = new List<PointF>();
+        }
+    }
     public class PolygonCanvas
     {
-        public CanvasMode Mode;
-        public List<PointF> Points;
+        /// <summary>
+        /// Non setable variables
+        /// </summary>
         private PictureBox Canvas;
         private ContextMenuStrip MenuStrip;
-        public List<Polygon> Polygons;
-        private int radius = 5;
-        public int offset { get; set; }
+        private const int radius = 5;
+
+        /// <summary>
+        /// Setable variables
+        /// </summary>
+        public CanvasMode Mode { get; set; }
+        public List<PointF> Points { get; set; }
+        public List<Polygon> Polygons { get; set; }
+        public int Offset { get; set; }
         public bool UseBresenham { get; set; }
 
         /// <summary>
@@ -62,11 +70,13 @@ namespace lab1
         private PointF? previousPoint = null;
         private int selectedPointIndex = -1;
         private int selectedEdgeStartIndex = -1;
+        private PointF currentPosition;
 
+        /// <summary>
+        ///  Relations variables
+        /// </summary>
         private Polygon? polygonToSetRelation = null;
         private int edgeIndexToSetRelation = -1;
-
-        private PointF currentPosition;
 
         public PolygonCanvas(CanvasMode mode, List<PointF> points, PictureBox canvas, List<Polygon> polygons, ContextMenuStrip menuStrip)
         {
@@ -81,7 +91,6 @@ namespace lab1
             currentPosition = new PointF(0, 0);
             DefineStartPolygons();
         }
-
         private void DefineStartPolygons()
         {
             Polygons = new List<Polygon>();
@@ -204,7 +213,6 @@ namespace lab1
             else if (Mode == CanvasMode.Add)
                 DrawPolygons();
         }
-        
         private void AddPoint(MouseEventArgs e)
         {
             if(Points.Count == 0 && SelectPointOrEdge(e))
@@ -241,7 +249,6 @@ namespace lab1
                 return false;
             }
         }
-        
         private bool SelectPointOrEdge(MouseEventArgs e)
         {
             var point = new PointF(e.X, e.Y);
@@ -330,6 +337,8 @@ namespace lab1
                 }
             }
         }
+
+        // Source: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
         private void Bresenham(PointF p1, PointF p2, Bitmap canvas)
         {
             var x0 = p1.X; var y0 = p1.Y;
@@ -488,7 +497,7 @@ namespace lab1
                     g.FillPolygon(brush, poly.Points.ToArray());
                     if (poly.ShowBorder)
                     {
-                        poly.BorderPoints = Geometry.CreateBoundedPolygon(poly, offset);
+                        poly.BorderPoints = Geometry.CreateBoundedPolygon(poly, Offset);
                         g.DrawPolygon(redPen, poly.BorderPoints.Select(x => new Point((int)x.X, (int)x.Y)).ToArray());
                     }
                 }
@@ -499,7 +508,7 @@ namespace lab1
         }
         private void CheckConditionsAndDraw(Polygon poly)
         {
-            if (poly.Points.Count == 0)
+            if (poly.Points.Count <= 1)
             {
                 Polygons.Remove(poly);
                 return;
