@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
@@ -13,7 +14,8 @@ namespace lab1
         Add,
         Move,
         Delete,
-        Border
+        Border,
+        Circle
     }
     public enum EdgeOrientation
     {
@@ -45,6 +47,16 @@ namespace lab1
             BorderPoints = new List<PointF>();
         }
     }
+    public class Circle
+    {
+        public int Radius { get; set; }
+        public Point Center { get; set; }
+        public Circle(int radius, Point center)
+        {
+            Radius = radius;
+            Center = center;
+        }
+    }
     public class PolygonCanvas
     {
         /// <summary>
@@ -62,6 +74,8 @@ namespace lab1
         public List<Polygon> Polygons { get; set; }
         public int Offset { get; set; }
         public bool UseBresenham { get; set; }
+        public List<Circle> Circles { get; set; }
+        public int CircleRadius { get; set; }
 
         /// <summary>
         ///  Edit mode variables
@@ -70,6 +84,7 @@ namespace lab1
         private PointF? previousPoint = null;
         private int selectedPointIndex = -1;
         private int selectedEdgeStartIndex = -1;
+        private Circle? selectedCircle = null;
         private PointF currentPosition;
 
         /// <summary>
@@ -89,6 +104,7 @@ namespace lab1
             Polygons = polygons;
             this.MenuStrip = menuStrip;
             currentPosition = new PointF(0, 0);
+            Circles = new List<Circle>();
             DefineStartPolygons();
         }
         private void DefineStartPolygons()
@@ -128,8 +144,9 @@ namespace lab1
                         AddPoint(e);
                         break;
                     case CanvasMode.Move:
-                        if(!SelectPointOrEdge(e))
-                            SelectPolygon(e);
+                        if(!SelectCircle(e))
+                            if(!SelectPointOrEdge(e))
+                                SelectPolygon(e);
                         previousPoint = new PointF(e.X, e.Y);
                         break;
                     case CanvasMode.Delete:
@@ -147,6 +164,10 @@ namespace lab1
                             DrawPolygons();
                         }
                         break;
+                    case CanvasMode.Circle:
+                        AddCircle(e);
+                        DrawPolygons();
+                        break;
                 }
             }
             else if(e.Button == MouseButtons.Right)
@@ -162,20 +183,43 @@ namespace lab1
                 }
             }
         }
+        private bool SelectCircle(MouseEventArgs e)
+        {
+            foreach(var circle in Circles)
+            {
+                var distance = Math.Sqrt((e.X - circle.Center.X) * (e.X - circle.Center.X) + (e.Y - circle.Center.Y) * (e.Y - circle.Center.Y));
+                if (distance<=circle.Radius)
+                {
+                    selectedCircle = circle;
+                    return true;
+                }
+            }
+            return false;
+        }
+        private void AddCircle(MouseEventArgs e)
+        {
+            Point p = new Point(e.X, e.Y);
+            Circles.Add(new Circle(CircleRadius, p));
+        }
         public void canvasMouseUp(object sender, MouseEventArgs e)
         {
             selectedPolygon = null;
+            selectedCircle = null;
             selectedEdgeStartIndex = -1;
             selectedPointIndex = -1;
         }
         public void canvasMouseMove(object sender, MouseEventArgs e)
         {
             currentPosition = new PointF(e.X, e.Y);
-            if (Mode == CanvasMode.Move && selectedPolygon != null)
+            if (Mode == CanvasMode.Move && (selectedPolygon != null || selectedCircle != null))
             {
                 (var X, var Y) = (e.X - previousPoint.Value.X, e.Y - previousPoint.Value.Y);
                 previousPoint = new PointF(e.X, e.Y);
-                if (selectedPointIndex != -1)
+                if(selectedCircle!= null)
+                {
+                    selectedCircle.Center = new Point(selectedCircle.Center.X+(int)X, selectedCircle.Center.Y+(int)Y);
+                }
+                else if (selectedPointIndex != -1)
                 {
                     int i = selectedPointIndex;
                     ChangePointCoordinates(i, X, Y);
@@ -326,7 +370,7 @@ namespace lab1
         private void DrawLine(PointF p1, PointF p2, Bitmap canvas, Pen pen)
         {
             if (UseBresenham)
-                Bresenham(p1, p2, canvas,pen);
+                Bresenham(p1, p2, canvas,pen.Color);
             else
             {
                 using (var graphics = Graphics.FromImage(canvas))
@@ -337,7 +381,7 @@ namespace lab1
         }
 
         // Source: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-        private void Bresenham(PointF p1, PointF p2, Bitmap canvas, Pen pen)
+        private void Bresenham(PointF p1, PointF p2, Bitmap canvas, Color color)
         {
             var x0 = (int)p1.X; var y0 = (int)p1.Y;
             var x1 = (int)p2.X; var y1 = (int)p2.Y;
@@ -345,19 +389,19 @@ namespace lab1
             if(Math.Abs(y1 - y0) < Math.Abs(x1-x0))
             {
                 if (x0 > x1)
-                    plotLineLow(x1, y1, x0, y0, canvas, pen);
+                    plotLineLow(x1, y1, x0, y0, canvas,color);
                 else
-                    plotLineLow(x0, y0, x1, y1, canvas, pen);
+                    plotLineLow(x0, y0, x1, y1, canvas, color);
             }
             else
             {
                 if(y0>y1)
-                    plotLineHigh(x1,y1,x0,y0, canvas, pen);
+                    plotLineHigh(x1,y1,x0,y0, canvas, color);
                 else
-                    plotLineHigh(x0, y0, x1,y1, canvas, pen);
+                    plotLineHigh(x0, y0, x1,y1, canvas, color);
             }
         }
-        private void plotLineLow(int x0, int y0, int x1, int y1, Bitmap canvas, Pen pen)
+        private void plotLineLow(int x0, int y0, int x1, int y1, Bitmap canvas, Color color)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -372,10 +416,7 @@ namespace lab1
             var y = y0;
             for(int x=x0; x<=x1; ++x)
             {
-                using (var graphics = Graphics.FromImage(canvas))
-                {
-                    graphics.DrawEllipse(pen, x, y, 1, 1);
-                }
+                canvas.SetPixel(x, y, color);
                 if(D>0)
                 {
                     y += yi;
@@ -387,7 +428,7 @@ namespace lab1
                 }
             }
         }
-        private void plotLineHigh(int x0, int y0, int x1, int y1, Bitmap canvas, Pen pen)
+        private void plotLineHigh(int x0, int y0, int x1, int y1, Bitmap canvas, Color color)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -402,10 +443,7 @@ namespace lab1
             var x = x0;
             for (int y = y0; y <= y1; ++y)
             {
-                using (var graphics = Graphics.FromImage(canvas))
-                {
-                    graphics.DrawEllipse(pen, x, y, 1, 1);
-                }
+                canvas.SetPixel(x, y, color);
                 if (D > 0)
                 {
                     x += xi;
@@ -446,6 +484,105 @@ namespace lab1
                 poly.EdgeRelations[i] = orientation;
             }
             DrawPolygons();
+        }
+        // Musiałem tylko zmienić kolor tła panelu, na którym kolorowałem
+        private void DrawCircle(Circle circle, Color color, Bitmap canvas)
+        {
+            var x0 = circle.Center.X;
+            var y0 = circle.Center.Y;
+            int R = circle.Radius;
+            int x = R;
+            int y = 0;
+            float T = 0;
+            var I = 255;
+
+            List<int> list = new List<int>();
+
+            List<Point> circlePoints = new List<Point>();
+            circlePoints.Add(new Point(x, y));
+            circlePoints.Add(new Point(y, x));
+
+            circlePoints.Add(new Point(-x, y));
+            circlePoints.Add(new Point(y, -x));
+
+            circlePoints.Add(new Point(x, -y));
+            circlePoints.Add(new Point(-y, x));
+
+            circlePoints.Add(new Point(-x, -y));
+            circlePoints.Add(new Point(-y, -x));
+
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+            list.Add((int)(I * (1 - D(R, y))));
+
+            while (x>y)
+            {
+                y++;
+                if (D(R, y) < T)
+                    x--;
+                circlePoints.Add(new Point(x, y));
+                circlePoints.Add(new Point(y, x));
+
+                circlePoints.Add(new Point(-x, y));
+                circlePoints.Add(new Point(y, -x));
+
+                circlePoints.Add(new Point(x, -y));
+                circlePoints.Add(new Point(-y, x));
+
+                circlePoints.Add(new Point(-x, -y));
+                circlePoints.Add(new Point(-y, -x));
+
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+                list.Add((int)(I * (1 - D(R, y))));
+
+                circlePoints.Add(new Point(x-1, y));
+                circlePoints.Add(new Point(y, x-1));
+
+                circlePoints.Add(new Point(-(x-1), y));
+                circlePoints.Add(new Point(y, -(x-1)));
+
+                circlePoints.Add(new Point(x-1, -y));
+                circlePoints.Add(new Point(-y, x-1));
+
+                circlePoints.Add(new Point(-(x - 1), -y));
+                circlePoints.Add(new Point(-y, -(x - 1)));
+
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+                list.Add((int)(I * D(R, y)));
+
+                T = (float)D(R, y);
+            }
+
+            for(int i=0; i<circlePoints.Count; ++i)
+            {
+                var pt = circlePoints[i];
+                using (Graphics g = Graphics.FromImage(canvas))
+                {
+                    Brush brush = new SolidBrush(Color.FromArgb(I-list[i], I-list[i],I - list[i]));
+                    g.FillRectangle(brush, pt.X + circle.Center.X, pt.Y + circle.Center.Y, 1, 1);
+                }
+            }
+        }
+        private double D(int R, int y)
+        {
+            return Math.Ceiling(Math.Sqrt(R * R - y * y)) - Math.Sqrt(R * R - y * y);
         }
         public void DrawPolygons()
         {
@@ -510,6 +647,11 @@ namespace lab1
                     }
                 }
             }
+            foreach(var circle in Circles)
+            {
+                circle.Radius = CircleRadius;
+                DrawCircle(circle, Color.Black, newCanvas);
+            }
             Canvas.Image.Dispose();
             Canvas.Image = newCanvas;
             Canvas.Refresh();
@@ -539,6 +681,7 @@ namespace lab1
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             Polygons.Clear();
             Points.Clear();
+            Circles.Clear();
             selectedPointIndex = -1;
             selectedPointIndex = -1;
             selectedPolygon = null;

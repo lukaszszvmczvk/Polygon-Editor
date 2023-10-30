@@ -10,7 +10,11 @@ namespace lab1
             InitializeComponent();
             offsetBox.Minimum = 0;
             offsetBox.Value = 20;
+            offsetBox.Maximum = 1000;
+            numericUpDown1.Value = 50;
+            numericUpDown1.Maximum = 1000;
             addModeRadioButton.Checked = true;
+            Canvas.BackColor = Color.White;
             addModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             moveModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
             deleteModeRadioButton.CheckedChanged += RadioButtonCheckedChanged;
@@ -18,6 +22,7 @@ namespace lab1
             Canvas.Image = new Bitmap(Canvas.Size.Width, Canvas.Size.Height);
             polygonCanvas = new PolygonCanvas(CanvasMode.Add, new List<PointF>(), Canvas, new List<Polygon>(), menuStrip);
             polygonCanvas.Offset = 20;
+            polygonCanvas.CircleRadius = 50;
         }
 
         private void RadioButtonCheckedChanged(object? sender, EventArgs e)
@@ -37,6 +42,10 @@ namespace lab1
             else if (borderModeRadioButton.Checked)
             {
                 polygonCanvas.Mode = CanvasMode.Border;
+            }
+            else if (circleRadioButton.Checked)
+            {
+                polygonCanvas.Mode = CanvasMode.Circle;
             }
         }
 
@@ -85,6 +94,15 @@ namespace lab1
                 else
                     polygonCanvas.UseBresenham = false;
 
+                polygonCanvas.DrawPolygons();
+            }
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            if (polygonCanvas != null)
+            {
+                polygonCanvas.CircleRadius = (int)numericUpDown1.Value;
                 polygonCanvas.DrawPolygons();
             }
         }

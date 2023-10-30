@@ -32,6 +32,9 @@
             layoutPanel = new TableLayoutPanel();
             Canvas = new DoubleBufferedPictureBox();
             panel1 = new Panel();
+            label2 = new Label();
+            numericUpDown1 = new NumericUpDown();
+            circleRadioButton = new RadioButton();
             bresenhamCheckBox = new CheckBox();
             offsetBox = new NumericUpDown();
             label1 = new Label();
@@ -46,6 +49,7 @@
             layoutPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)Canvas).BeginInit();
             panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)offsetBox).BeginInit();
             menuStrip.SuspendLayout();
             SuspendLayout();
@@ -68,7 +72,7 @@
             // 
             // Canvas
             // 
-            Canvas.BackColor = SystemColors.AppWorkspace;
+            Canvas.BackColor = SystemColors.Window;
             Canvas.Dock = DockStyle.Fill;
             Canvas.Location = new Point(3, 3);
             Canvas.Name = "Canvas";
@@ -79,6 +83,9 @@
             // panel1
             // 
             panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            panel1.Controls.Add(label2);
+            panel1.Controls.Add(numericUpDown1);
+            panel1.Controls.Add(circleRadioButton);
             panel1.Controls.Add(bresenhamCheckBox);
             panel1.Controls.Add(offsetBox);
             panel1.Controls.Add(label1);
@@ -92,10 +99,38 @@
             panel1.Size = new Size(216, 547);
             panel1.TabIndex = 1;
             // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(37, 256);
+            label2.Name = "label2";
+            label2.Size = new Size(53, 20);
+            label2.TabIndex = 11;
+            label2.Text = "Radius";
+            // 
+            // numericUpDown1
+            // 
+            numericUpDown1.Location = new Point(95, 254);
+            numericUpDown1.Name = "numericUpDown1";
+            numericUpDown1.Size = new Size(68, 27);
+            numericUpDown1.TabIndex = 10;
+            numericUpDown1.ValueChanged += numericUpDown1_ValueChanged;
+            // 
+            // circleRadioButton
+            // 
+            circleRadioButton.AutoSize = true;
+            circleRadioButton.Location = new Point(16, 226);
+            circleRadioButton.Name = "circleRadioButton";
+            circleRadioButton.Size = new Size(99, 24);
+            circleRadioButton.TabIndex = 9;
+            circleRadioButton.TabStop = true;
+            circleRadioButton.Text = "Add Circle";
+            circleRadioButton.UseVisualStyleBackColor = true;
+            // 
             // bresenhamCheckBox
             // 
             bresenhamCheckBox.AutoSize = true;
-            bresenhamCheckBox.Location = new Point(15, 240);
+            bresenhamCheckBox.Location = new Point(15, 287);
             bresenhamCheckBox.Name = "bresenhamCheckBox";
             bresenhamCheckBox.Size = new Size(132, 24);
             bresenhamCheckBox.TabIndex = 8;
@@ -211,6 +246,7 @@
             ((System.ComponentModel.ISupportInitialize)Canvas).EndInit();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numericUpDown1).EndInit();
             ((System.ComponentModel.ISupportInitialize)offsetBox).EndInit();
             menuStrip.ResumeLayout(false);
             ResumeLayout(false);
@@ -232,5 +268,8 @@
         private Label label1;
         private NumericUpDown offsetBox;
         private CheckBox bresenhamCheckBox;
+        private RadioButton circleRadioButton;
+        private NumericUpDown numericUpDown1;
+        private Label label2;
     }
 }
