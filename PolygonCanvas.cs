@@ -109,7 +109,6 @@ namespace lab1
 
             DrawPolygons();
         }
-
         public void canvasMouseDown(object sender, MouseEventArgs e)
         {
             if(e.Button == MouseButtons.Left)
@@ -433,13 +432,11 @@ namespace lab1
                     (id1, id2) = (id2, id1);
                 if(orientation == EdgeOrientation.Horizontal)
                 {
-                    var offset = poly.Points[id2].X - poly.Points[id1].X;
-                    poly.Points[id2] = new PointF(poly.Points[id1].X + offset, poly.Points[id1].Y);
+                    poly.Points[id2] = new PointF(poly.Points[id2].X, poly.Points[id1].Y);
                 }
                 else
                 {
-                    var offset = poly.Points[id2].Y- poly.Points[id1].Y;
-                    poly.Points[id2] = new PointF(poly.Points[id1].X, poly.Points[id1].Y + offset);
+                    poly.Points[id2] = new PointF(poly.Points[id1].X, poly.Points[id2].Y);
                 }
                 poly.EdgeRelations[i] = orientation;
             }

@@ -1,0 +1,10 @@
+Klawiszologia:
+ - Po prawej stronie aplikajcji są 4 radio buttony dla różnych trybów. Po przełączeniu na dany tryb wszystkie działania wykonuje się za pomocą lewego przycisku myszy.
+ - Aby dodać ograniczenie należy nacisąć prawym przyciskiem na krawędź, wtedy wyświetli się menu, w którym można wybrać czy krawędź ma być horizontal czy vertical. Aby wyłączyć ograniczenie należy ponownie kliknąć na tą krawędź prawym przyciskiem i nacisnąć na ograniczenie, które jest na nią nałożone.
+
+Algorytymy i założenia:
+ - Relacje: Przy nakładaniu ograniczenia na krawędź "dolny" punkt jest zawsze statyczny. Niech (x_0, y_0) i (x_1, y_1) to wierzchołki krawędzi oraz y_0 <= y_1. Wtedy krawędź, która powstanie przez nałożenie ograniczenia to:
+	i) Horizontal: (x_0, y_0) (x_1, y_0)
+	ii) Vertical : (x_0, y_0) (x_0, y_1)
+Przy przesuwaniu ograniczonych krawędzi/wierzchołków, przesuwam również wszystkie krawędzie/wierzchołki, które są zależne od wybranej krawędzi/wierzchołka. Przykładowo jeśli wybrany wierzchołek należy do dwóch ograniczonych krawędzi (wertykalnej i horyzontalnej) to przesuwając go zmieniam różnież położenie pozostałych wierzchołków należących do tych krawędzi tak, aby ograniczenia były zachowane.
+ - Wielokąt odsunięty: Dla każdej krawędzi wielokąta szukam odpowiedniej prostej równoległej do niego prostej, a następnie szukam punktów przecięcia wyznaczonych prostych. Punkty przecięcia definiują wielokąt odsunięty. Niech p1, p2, p3 będą kolejnymi punktami wielokąta. Najpierw znajduje równania dwóch prostych równoległych do odcinka p2-p3, a następnie wybieram tą z nich, która nie ma punktu przecięcia z półprostą o początku w p2 i przechodzącą przez p1 (dla krawędzi równoległych do osi Y lub do osi X są oddzielne przypadki, gdyż czasami dokładność obliczeń powodowała błędy w wyznaczniu odpowiedniej prostej). Następnie dla tak wyznaczonych prostych szukam punktu przecięcia z prostymi, odpowiadającymi sąsiednim odcinkom.  
